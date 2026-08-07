@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F3EFE6">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  body { background: #F3EFE6; -webkit-text-size-adjust: 100%; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+  button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  input, button { font-size: 16px; }
+  #dc-root, #dc-root > *, x-dc, x-dc > * { height: 100%; }
+  #dc-root > * { display: flex; justify-content: center; }
+  a { color: #4C5B3C; text-decoration: none; }
+  a:hover { color: #3A472E; }
+  input { font-family: 'Archivo', sans-serif; }
+  input:focus { outline: none; }
+  .leaflet-container { background: #EAE4D8; }
+  @keyframes sl-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes sl-pop { 0% { transform: scale(.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes sl-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+</style>
+<template id="__bundler_thumbnail" data-bg-color="#F3EFE6">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#F3EFE6"/>
+    <path d="M190 470 C330 210, 450 660, 600 400 S860 190, 1010 370" fill="none" stroke="#B5502F" stroke-width="46" stroke-linecap="round"/>
+  </svg>
+</template>
+</helmet>
+<div style="position:relative;width:100%;max-width:560px;height:100%;margin:0 auto;background:#F3EFE6;overflow:hidden;color:#1C1815;font-family:'Archivo',sans-serif;">
+
+      <div ref="{{ mapRef }}" style="{{ mapWrapStyle }}">
+        <div style="position:absolute;left:16px;top:calc(env(safe-area-inset-top, 0px) + 68px);z-index:800;font-family:'Archivo',sans-serif;font-size:11.5px;font-weight:600;letter-spacing:.2px;color:rgba(28,24,21,.55);pointer-events:none;white-space:nowrap;">© OpenStreetMap</div>
+      </div>
+
+      <sc-if value="{{ showHome }}" hint-placeholder-val="{{ true }}">
+        <div data-screen-label="Home" style="position:absolute;left:14px;top:calc(env(safe-area-inset-top, 0px) + 12px);z-index:3;font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.4px;color:#1C1815;background:rgba(252,249,242,.86);-webkit-backdrop-filter:saturate(150%) blur(14px);backdrop-filter:saturate(150%) blur(14px);border:1px solid rgba(28,24,21,.10);border-radius:999px;padding:11px 18px;box-shadow:0 10px 24px rgba(28,24,21,.16), inset 0 1px 0 rgba(255,255,255,.75);">SQUIGGLE<span style="display:block;height:2px;background:#B5502F;margin-top:4px;border-radius:2px;"></span></div>
+        <div style="position:absolute;right:14px;top:calc(env(safe-area-inset-top, 0px) + 12px);z-index:3;display:flex;gap:8px;">
+          <button onClick="{{ openSaved }}" style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;letter-spacing:1.2px;color:#1C1815;background:rgba(252,249,242,.86);-webkit-backdrop-filter:saturate(150%) blur(14px);backdrop-filter:saturate(150%) blur(14px);border:1px solid rgba(28,24,21,.10);border-radius:999px;padding:13px 16px;cursor:pointer;box-shadow:0 10px 24px rgba(28,24,21,.16), inset 0 1px 0 rgba(255,255,255,.75);" style-active="transform:translateY(1px);box-shadow:0 4px 12px rgba(28,24,21,.14);">SAVED</button>
+          <button onClick="{{ openSettings }}" style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;letter-spacing:1.2px;color:#1C1815;background:rgba(252,249,242,.86);-webkit-backdrop-filter:saturate(150%) blur(14px);backdrop-filter:saturate(150%) blur(14px);border:1px solid rgba(28,24,21,.10);border-radius:999px;padding:13px 16px;cursor:pointer;box-shadow:0 10px 24px rgba(28,24,21,.16), inset 0 1px 0 rgba(255,255,255,.75);" style-active="transform:translateY(1px);box-shadow:0 4px 12px rgba(28,24,21,.14);">TUNE</button>
+        </div>
+        <button ref="{{ gpsRef }}" onClick="{{ locateMe }}" style="{{ gpsBtnStyle }}" style-active="transform:translateY(1px);box-shadow:0 2px 6px rgba(28,24,21,.10);">&#9678;</button>
+        <div ref="{{ sheetRef }}" style="{{ sheetStyle }}" onPointerDown="{{ onSheetDown }}" onPointerMove="{{ onSheetMove }}" onPointerUp="{{ onSheetUp }}" onPointerCancel="{{ onSheetUp }}" onClickCapture="{{ onSheetClick }}">
+          <div style="{{ scrimStyle }}"></div>
+          <div data-sheet-handle="1" style="flex:0 0 auto;position:relative;display:flex;align-items:center;justify-content:center;padding:4px 0 12px;cursor:grab;">
+            <div style="{{ handleStyle }}"></div>
+          </div>
+          <button onClick="{{ toggleStart }}" style="flex:0 0 auto;display:flex;align-items:center;gap:9px;background:none;border:none;padding:2px 0;cursor:pointer;font-family:'Archivo',sans-serif;text-align:left;">
+            <span style="{{ eyebrowStyle }}">FROM</span>
+            <span style="{{ linkStyle }}">{{ startLabel }}</span>
+          </button>
+          <sc-if value="{{ showControls }}" hint-placeholder-val="{{ true }}">
+            <div ref="{{ listRef }}" style="flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                <div style="{{ eyebrowStyle }}">PICK A VIBE</div>
+                <button onClick="{{ rollVibe }}" style="{{ rollStyle }}" style-active="transform:translateY(1px);">ROLL THE DICE</button>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:9px;">
+                <sc-for list="{{ styleCards }}" as="s" hint-placeholder-count="3">
+                  <button onClick="{{ s.select }}" style="{{ s.rowStyle }}" style-active="transform:translateY(1px);">
+                    <span style="{{ s.dotStyle }}"></span>
+                    <span style="{{ s.nameStyle }}">{{ s.name }}</span>
+                    <span style="{{ s.rangeStyle }}">{{ s.range }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <div style="{{ eyebrow2Style }}">HOW FAR?</div>
+              <div style="display:flex;gap:8px;">
+                <sc-for list="{{ chips }}" as="c" hint-placeholder-count="4">
+                  <button onClick="{{ c.select }}" style="{{ c.style }}">{{ c.label }}<span style="{{ c.subStyle }}">{{ c.sub }}</span></button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ showCustom }}" hint-placeholder-val="{{ false }}">
+                <div style="{{ customRowStyle }}">
+                  <input value="{{ customMi }}" onChange="{{ onCustomMi }}" inputMode="decimal" style="{{ customInputStyle }}">
+                  <span style="{{ customUnitStyle }}">{{ customUnit }}</span>
+                  <span style="{{ customEtaStyle }}">{{ customEta }}</span>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ showCompact }}" hint-placeholder-val="{{ false }}">
+            <div style="{{ compactRowStyle }}">
+              <span style="{{ compactDot }}"></span>
+              <span style="{{ compactNameStyle }}">{{ compactVibe }}</span>
+              <span style="margin-left:auto;">{{ compactFar }}</span>
+            </div>
+          </sc-if>
+          <button onClick="{{ generate }}" style="{{ ctaStyle }}" style-active="transform:translateY(2px) scale(.994);">{{ ctaLabel }}</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showDeck }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Route deck" style="position:absolute;inset:0;background:#F3EFE6;z-index:6;box-sizing:border-box;padding:calc(env(safe-area-inset-top, 0px) + 12px) 16px calc(env(safe-area-inset-bottom, 0px) + 14px);display:flex;flex-direction:column;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <button onClick="{{ goHome }}" style="font-family:'Archivo',sans-serif;font-weight:800;font-size:12.5px;letter-spacing:1px;background:#FBF8F1;border:1px solid rgba(28,24,21,.13);border-radius:999px;padding:10px 15px;cursor:pointer;box-shadow:0 4px 12px rgba(28,24,21,.10);" style-active="transform:translateY(1px);box-shadow:0 1px 4px rgba(28,24,21,.08);">&#8592; HOME</button>
+            <div style="font-size:11.5px;font-weight:700;letter-spacing:1.5px;color:#6E655A;">{{ deckCount }} IN THE PILE</div>
+          </div>
+          <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:19px;margin:14px 0 4px;">PICK YOUR RIDE</div>
+          <div style="font-size:12.5px;font-weight:600;color:#6E655A;margin-bottom:12px;">swipe right to stash · left to ditch · up to ride now</div>
+          <div style="position:relative;flex:1;">
+            <sc-if value="{{ deckEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;">
+                <div style="width:56px;height:56px;border:2px dashed rgba(28,24,21,.20);border-radius:10px;animation:sl-bob 2.4s ease-in-out infinite;"></div>
+                <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;">PILE'S EMPTY</div>
+                <button onClick="{{ moreCards }}" style="font-family:'Archivo',sans-serif;font-weight:800;font-size:13.5px;letter-spacing:1px;background:#B5502F;color:#FBF8F1;border:1px solid rgba(28,24,21,.13);border-radius:9px;padding:13px 20px;cursor:pointer;box-shadow:0 10px 24px rgba(28,24,21,.12);" style-active="transform:translateY(1px);box-shadow:0 2px 6px rgba(28,24,21,.10);">DEAL THREE MORE</button>
+              </div>
+            </sc-if>
+            <sc-for list="{{ deckCards }}" as="card" hint-placeholder-count="2">
+              <div ref="{{ card.ref }}" style="{{ card.style }}" onPointerDown="{{ card.onDown }}" onPointerMove="{{ card.onMove }}" onPointerUp="{{ card.onUp }}" onPointerCancel="{{ card.onUp }}">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+                  <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:18px;line-height:1.1;">{{ card.name }}</div>
+                  <div style="{{ card.badgeStyle }}">{{ card.badge }}</div>
+                </div>
+                <div style="display:flex;gap:14px;margin-top:6px;font-size:14px;font-weight:700;white-space:nowrap;">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;letter-spacing:-.3px;">{{ card.dist }}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;letter-spacing:-.3px;color:#6E655A;">~{{ card.mins }}</span>
+                </div>
+                <div style="position:relative;flex:1;min-height:0;background:#EAE4D8;border:1px solid rgba(28,24,21,.13);border-radius:9px;margin-top:10px;overflow:hidden;">{{ card.preview }}</div>
+                <div style="display:flex;height:9px;border-radius:99px;overflow:hidden;border:1px solid rgba(28,24,21,.13);margin-top:10px;">
+                  <div style="{{ card.barLane }}"></div>
+                  <div style="{{ card.barPath }}"></div>
+                  <div style="{{ card.barStreet }}"></div>
+                </div>
+                <div style="font-size:11.5px;font-weight:700;color:#6E655A;margin-top:5px;">{{ card.surfText }}</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+                  <sc-for list="{{ card.stats }}" as="stat" hint-placeholder-count="4">
+                    <div style="background:#ECE6D9;border:1px solid rgba(28,24,21,.13);border-radius:7px;padding:7px 9px;">
+                      <div style="font-size:11px;font-weight:700;letter-spacing:1.2px;color:#6E655A;">{{ stat.label }}</div>
+                      <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15.5px;line-height:1.2;letter-spacing:-.4px;">{{ stat.value }}</div>
+                      <div style="font-size:11.5px;font-weight:600;color:#6E655A;">{{ stat.note }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="margin-top:9px;font-size:11.5px;font-weight:700;letter-spacing:.3px;color:#6E655A;">{{ card.wxLine }}</div>
+                <div ref="{{ card.stashRef }}" style="{{ card.stashStamp }}">STASH</div>
+                <div ref="{{ card.nopeRef }}" style="{{ card.nopeStamp }}">NOPE</div>
+                <div ref="{{ card.rideRef }}" style="{{ card.rideStamp }}">RIDE IT</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:16px;">
+            <button onClick="{{ swipeLeft }}" style="width:56px;height:56px;border-radius:50%;background:#F3EFE6;color:#B5502F;border:1px solid rgba(28,24,21,.13);box-shadow:0 10px 24px rgba(28,24,21,.12);font-family:'Archivo',sans-serif;font-weight:800;font-size:18px;cursor:pointer;" style-active="transform:translateY(1px);box-shadow:0 2px 6px rgba(28,24,21,.10);">&#10005;</button>
+            <button onClick="{{ swipeUp }}" style="height:56px;padding:0 22px;border-radius:999px;background:#B5502F;color:#FBF8F1;border:1px solid rgba(28,24,21,.13);box-shadow:0 10px 24px rgba(28,24,21,.12);font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;letter-spacing:1px;cursor:pointer;" style-active="transform:translateY(1px);box-shadow:0 2px 6px rgba(28,24,21,.10);">RIDE IT</button>
+            <button onClick="{{ swipeRight }}" style="width:56px;height:56px;border-radius:50%;background:#4C5B3C;color:#F3EFE6;border:1px solid rgba(28,24,21,.13);box-shadow:0 10px 24px rgba(28,24,21,.12);font-family:'Archivo',sans-serif;font-weight:800;font-size:16px;cursor:pointer;" style-active="transform:translateY(1px);box-shadow:0 2px 6px rgba(28,24,21,.10);">&#9733;</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showResult }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Route result" style="position:absolute;left:14px;right:14px;top:calc(env(safe-area-inset-top, 0px) + 12px);z-index:5;display:flex;flex-direction:column;gap:10px;pointer-events:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;gap:8px;">
+              <button onClick="{{ goHome }}" style="pointer-events:auto;font-family:'Archivo',sans-serif;font-weight:800;font-size:12.5px;letter-spacing:1px;background:#F3EFE6;border:1px solid rgba(28,24,21,.13);border-radius:999px;padding:10px 15px;cursor:pointer;box-shadow:0 6px 16px rgba(28,24,21,.11);" style-active="transform:translateY(1px);box-shadow:0 2px 6px rgba(28,24,21,.10);">&#8592; HOME</button>
+              <sc-if value="{{ hasDeck }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ backToDeck }}" style="pointer-events:auto;font-family:'Archivo',sans-serif;font-weight:800;font-size:12.5px;letter-spacing:1px;background:#F3EFE6;border:1px solid rgba(28,24,21,.13);border-radius:999px;padding:10px 15px;cursor:pointer;box-shadow:0 6px 16px rgba(28,24,21,.11);" style-active="transform:translateY(1px);box-shadow:0 2px 6px rgba(28,24,21,.10);">THE PILE</button>
+              </sc-if>
+            </div>
+            <button onClick="{{ toggleCam }}" style="{{ camStyle }}" style-active="transform:translateY(1px);box-shadow:0 2px 6px rgba(28,24,21,.10);">{{ camLabel }}</button>
+          </div>
+          <div style="pointer-events:auto;background:#F3EFE6;border:1px solid rgba(28,24,21,.13);border-radius:10px;box-shadow:0 14px 30px rgba(28,24,21,.13);padding:14px 16px;animation:sl-pop .25s ease-out;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+              <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:17px;line-height:1.1;">{{ routeName }}</div>
+              <div style="{{ badgeStyle }}">{{ routeBadge }}</div>
+            </div>
+            <div style="display:flex;gap:14px;margin-top:8px;font-size:14px;font-weight:700;white-space:nowrap;">
+              <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;letter-spacing:-.3px;">{{ routeDist }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;letter-spacing:-.3px;color:#6E655A;">~{{ routeTime }}</span>
+              <span style="color:#6E655A;">{{ stopCount }}</span>
+            </div>
+            <div style="display:flex;height:10px;border-radius:99px;overflow:hidden;border:1px solid rgba(28,24,21,.13);margin-top:10px;">
+              <div style="{{ barLane }}"></div>
+              <div style="{{ barPath }}"></div>
+              <div style="{{ barStreet }}"></div>
+            </div>
+            <div style="font-size:11.5px;font-weight:700;color:#6E655A;margin-top:8px;">{{ routeExtras }}</div>
+            <div style="display:flex;gap:11px;margin-top:8px;font-size:10.5px;font-weight:700;letter-spacing:.4px;color:#6E655A;white-space:nowrap;">
+              <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#B5502F;margin-right:4px;"></span>{{ pctLane }} BIKE LANE</span>
+              <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#4C5B3C;margin-right:4px;"></span>{{ pctPath }} PATH</span>
+              <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:rgba(28,24,21,.16);margin-right:4px;"></span>{{ pctStreet }} QUIET ST</span>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:14px;right:14px;bottom:calc(env(safe-area-inset-bottom, 0px) + 14px);z-index:5;display:flex;flex-direction:column;gap:10px;">
+          <sc-if value="{{ relayOn }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#F4E5DB;border:1px solid rgba(28,24,21,.13);border-radius:10px;box-shadow:0 14px 30px rgba(28,24,21,.13);padding:11px 13px 12px;display:flex;flex-direction:column;gap:9px;animation:sl-pop .2s ease-out;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:13.5px;letter-spacing:.8px;">APPLE RELAY · {{ relayCount }}</div>
+                <button onClick="{{ relayClose }}" style="font-family:'Archivo',sans-serif;font-weight:800;font-size:13.5px;background:none;border:none;cursor:pointer;color:#6E655A;padding:2px 4px;">&#10005;</button>
+              </div>
+              <div style="font-size:14px;font-weight:700;line-height:1.25;">{{ relayLeg }}</div>
+              <div style="font-size:11.5px;font-weight:600;color:#6E655A;line-height:1.3;">apple maps only takes one stop per trip on bike — we hand off the loop one leg at a time</div>
+              <div style="display:flex;gap:8px;">
+                <button onClick="{{ relayPrev }}" style="width:48px;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;background:#FBF8F1;border:1px solid rgba(28,24,21,.13);border-radius:8px;padding:12px 0;cursor:pointer;box-shadow:0 6px 16px rgba(28,24,21,.11);" style-active="transform:translateY(1px);box-shadow:0 2px 6px rgba(28,24,21,.10);">&#8592;</button>
+                <button onClick="{{ relaySend }}" style="flex:1;font-family:'Archivo',sans-serif;font-weight:800;font-size:13.5px;letter-spacing:.5px;background:#FBF8F1;border:1px solid rgba(28,24,21,.13);border-radius:8px;padding:12px 4px;cursor:pointer;box-shadow:0 6px 16px rgba(28,24,21,.11);" style-active="transform:translateY(1px);box-shadow:0 2px 6px rgba(28,24,21,.10);">{{ relaySendLabel }}</button>
+                <button onClick="{{ relayNext }}" style="flex:1.1;font-family:'Archivo',sans-serif;font-weight:800;font-size:13.5px;letter-spacing:.5px;background:#B5502F;color:#FBF8F1;border:1px solid rgba(28,24,21,.13);border-radius:8px;padding:12px 4px;cursor:pointer;box-shadow:0 6px 16px rgba(28,24,21,.11);" style-active="transform:translateY(1px);box-shadow:0 2px 6px rgba(28,24,21,.10);">{{ relayNextLabel }}</button>
+              </div>
+            </div>
+          </sc-if>
+          <button onClick="{{ openAddStop }}" style="display:flex;align-items:center;gap:13px;text-align:left;background:#F4E5DB;border:1px solid rgba(181,80,47,.38);border-radius:10px;padding:13px 15px;cursor:pointer;box-shadow:0 6px 16px rgba(28,24,21,.10);" style-active="transform:translateY(1px);">
+            <span style="width:32px;height:32px;flex:0 0 auto;border-radius:50%;background:#B5502F;color:#FBF8F1;font-family:'Archivo',sans-serif;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;">+</span>
+            <span style="display:flex;flex-direction:column;gap:2px;">
+              <span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;letter-spacing:.4px;color:#1C1815;">ADD A STOP</span>
+              <span style="font-family:'Archivo',sans-serif;font-weight:600;font-size:12.5px;color:#6E655A;">caf&#233;s &#183; sights &#183; landmarks &#183; history</span>
+            </span>
+            <span style="margin-left:auto;font-family:'Archivo',sans-serif;font-weight:800;font-size:16px;color:#B5502F;">&#8594;</span>
+          </button>
+          <div style="display:flex;gap:8px;">
+            <button onClick="{{ reroll }}" style="{{ quietBtn }}" style-active="transform:translateY(1px);">REROLL</button>
+            <button onClick="{{ saveRoute }}" style="{{ quietBtn }}" style-active="transform:translateY(1px);">{{ saveLabel }}</button>
+            <button onClick="{{ openDirections }}" style="{{ quietBtn }}" style-active="transform:translateY(1px);">STEPS</button>
+            <button onClick="{{ nope }}" style="{{ dangerBtn }}" style-active="transform:translateY(1px);">NOPE</button>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button onClick="{{ startRide }}" style="{{ primaryBtn }}" style-active="transform:translateY(2px);">START RIDE</button>
+            <button onClick="{{ openGoogle }}" style="{{ googleBtn }}" style-active="transform:translateY(1px);">GOOGLE</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showRiding }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Riding" style="position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top, 0px) + 12px);z-index:5;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;">
+          <div style="{{ gpsStyle }}">{{ gpsLabel }}</div>
+          <div style="background:#1C1815;color:#F3EFE6;border-radius:999px;padding:10px 18px;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;letter-spacing:.5px;box-shadow:0 4px 12px rgba(28,24,21,.35);">{{ rideStatus }}</div>
+        </div>
+        <div style="position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom, 0px) + 92px);z-index:5;display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
+          <button onClick="{{ toggleCam }}" style="{{ camStyle }}" style-active="transform:translateY(1px);box-shadow:0 2px 6px rgba(28,24,21,.10);">{{ camLabel }}</button>
+          <button onClick="{{ recenter }}" style="width:46px;height:46px;border-radius:50%;background:#F3EFE6;border:1px solid rgba(28,24,21,.13);box-shadow:0 6px 16px rgba(28,24,21,.11);font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;cursor:pointer;" style-active="transform:translateY(1px);box-shadow:0 2px 6px rgba(28,24,21,.10);">&#9678;</button>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom, 0px) + 18px);z-index:5;display:flex;justify-content:center;">
+          <button onClick="{{ endRide }}" style="background:#B5502F;color:#FBF8F1;border:1px solid rgba(28,24,21,.13);border-radius:9px;box-shadow:0 14px 30px rgba(28,24,21,.13);font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;letter-spacing:1px;padding:14px 28px;cursor:pointer;" style-active="transform:translateY(2px);box-shadow:0 2px 6px rgba(28,24,21,.10);">END RIDE</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showAddStop }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Add stop" style="position:absolute;left:0;right:0;top:32%;bottom:0;background:#F3EFE6;border-top:1px solid rgba(28,24,21,.13);border-radius:13px 13px 0 0;z-index:8;box-sizing:border-box;padding:12px 18px calc(env(safe-area-inset-bottom, 0px) + 16px);display:flex;flex-direction:column;gap:10px;box-shadow:0 -8px 24px rgba(28,24,21,.25);">
+          <div style="width:44px;height:5px;border-radius:99px;background:rgba(28,24,21,.16);margin:0 auto;"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:17px;">ADD A STOP</div>
+            <button onClick="{{ closeAddStop }}" style="font-family:'Archivo',sans-serif;font-weight:800;font-size:13.5px;background:#FBF8F1;border:1px solid rgba(28,24,21,.13);border-radius:999px;width:30px;height:30px;cursor:pointer;">&#10005;</button>
+          </div>
+          <input value="{{ searchQ }}" onChange="{{ onSearch }}" placeholder="a caf&#233;, a landmark, a park&#8230;" style="border:1px solid rgba(28,24,21,.13);border-radius:9px;padding:14px 15px;font-size:16px;font-weight:600;background:#FBF8F1;color:#1C1815;box-shadow:0 4px 12px rgba(28,24,21,.08);">
+          <div style="flex:0 0 auto;display:flex;gap:7px;overflow-x:auto;overscroll-behavior:contain;padding:1px 0 3px;">
+            <sc-for list="{{ catChips }}" as="k" hint-placeholder-count="6">
+              <button onClick="{{ k.select }}" style="{{ k.style }}">{{ k.label }}</button>
+            </sc-for>
+          </div>
+          <sc-if value="{{ hasStops }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:#6E655A;">ON THE ROUTE (AUTO-ORDERED)</div>
+              <sc-for list="{{ stopsList }}" as="st" hint-placeholder-count="1">
+                <div style="display:flex;align-items:center;gap:10px;background:#E8E1D2;border:1px solid rgba(28,24,21,.13);border-radius:8px;padding:8px 10px;">
+                  <span style="width:20px;height:20px;border-radius:6px;background:#4C5B3C;color:#F3EFE6;font-family:'Archivo',sans-serif;font-weight:800;font-size:12.5px;display:flex;align-items:center;justify-content:center;">{{ st.n }}</span>
+                  <span style="flex:1;font-weight:700;font-size:14px;">{{ st.name }}</span>
+                  <button onClick="{{ st.remove }}" style="background:none;border:none;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:#B5502F;cursor:pointer;">&#10005;</button>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div style="flex:1;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;">
+            <sc-for list="{{ results }}" as="r" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:11px;padding:12px 2px;border-bottom:1px solid rgba(28,24,21,.10);">
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;color:#1C1815;">{{ r.name }}</div>
+                    <div style="{{ r.kindStyle }}">{{ r.kind }}</div>
+                  </div>
+                  <div style="font-size:12.5px;color:#6E655A;font-weight:600;margin-top:2px;">{{ r.meta }}</div>
+                </div>
+                <button onClick="{{ r.add }}" style="font-family:'Archivo',sans-serif;font-weight:800;font-size:11.5px;letter-spacing:.5px;background:#B5502F;color:#FBF8F1;border:1px solid rgba(28,24,21,.13);border-radius:999px;padding:10px 14px;cursor:pointer;box-shadow:0 4px 12px rgba(28,24,21,.10);" style-active="transform:translateY(1px);box-shadow:0 1px 4px rgba(28,24,21,.08);">+ ADD</button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showDirections }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Turn by turn" style="position:absolute;left:0;right:0;top:22%;bottom:0;background:#F3EFE6;border-top:1px solid rgba(28,24,21,.13);border-radius:13px 13px 0 0;z-index:8;box-sizing:border-box;padding:12px 18px calc(env(safe-area-inset-bottom, 0px) + 16px);display:flex;flex-direction:column;gap:8px;box-shadow:0 -8px 24px rgba(28,24,21,.25);">
+          <div style="width:44px;height:5px;border-radius:99px;background:rgba(28,24,21,.16);margin:0 auto;"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:17px;">TURN BY TURN</div>
+            <button onClick="{{ closeDirections }}" style="font-family:'Archivo',sans-serif;font-weight:800;font-size:13.5px;background:#FBF8F1;border:1px solid rgba(28,24,21,.13);border-radius:999px;width:30px;height:30px;cursor:pointer;">&#10005;</button>
+          </div>
+          <div style="font-size:12.5px;font-weight:600;color:#6E655A;">{{ dirSummary }}</div>
+          <sc-if value="{{ hasDirs }}" hint-placeholder-val="{{ true }}">
+            <div style="flex:1;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;">
+              <sc-for list="{{ dirList }}" as="d" hint-placeholder-count="6">
+                <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 2px;border-bottom:1px solid rgba(28,24,21,.10);">
+                  <span style="flex:0 0 auto;width:22px;height:22px;border-radius:7px;background:#4C5B3C;color:#F3EFE6;font-family:'Archivo',sans-serif;font-weight:800;font-size:12.5px;display:flex;align-items:center;justify-content:center;">{{ d.n }}</span>
+                  <div style="flex:1;">
+                    <div style="font-weight:700;font-size:14px;line-height:1.3;">{{ d.text }}</div>
+                    <div style="font-size:12.5px;font-weight:600;color:#6E655A;">{{ d.dist }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ noDirs }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:13.5px;font-weight:600;color:#6E655A;padding:0 20px;">No turn list for this route. Open it in Google Maps for directions.</div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showSaved }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Saved routes" style="position:absolute;inset:0;background:#F3EFE6;z-index:7;box-sizing:border-box;padding:calc(env(safe-area-inset-top, 0px) + 12px) 18px calc(env(safe-area-inset-bottom, 0px) + 20px);display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button onClick="{{ goHome }}" style="font-family:'Archivo',sans-serif;font-weight:800;font-size:12.5px;background:#FBF8F1;border:1px solid rgba(28,24,21,.13);border-radius:999px;padding:10px 15px;cursor:pointer;box-shadow:0 4px 12px rgba(28,24,21,.10);" style-active="transform:translateY(1px);box-shadow:0 1px 4px rgba(28,24,21,.08);">&#8592;</button>
+            <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:20px;">THE STASH</div>
+          </div>
+          <sc-if value="{{ hasSaved }}" hint-placeholder-val="{{ true }}">
+            <div style="flex:1;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:10px;">
+              <sc-for list="{{ savedList }}" as="sv" hint-placeholder-count="2">
+                <div style="border:1px solid rgba(28,24,21,.13);border-radius:9px;background:#FBF8F1;padding:12px 14px;box-shadow:0 6px 16px rgba(28,24,21,.11);">
+                  <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;">{{ sv.name }}</div>
+                  <div style="font-size:12.5px;font-weight:600;color:#6E655A;margin-top:2px;">{{ sv.meta }}</div>
+                  <div style="display:flex;gap:8px;margin-top:10px;">
+                    <button onClick="{{ sv.load }}" style="font-family:'Archivo',sans-serif;font-weight:800;font-size:11.5px;letter-spacing:.5px;background:#4C5B3C;color:#F3EFE6;border:1px solid rgba(28,24,21,.13);border-radius:999px;padding:7px 12px;cursor:pointer;">RIDE IT</button>
+                    <button onClick="{{ sv.similar }}" style="font-family:'Archivo',sans-serif;font-weight:800;font-size:11.5px;letter-spacing:.5px;background:#F3EFE6;border:1px solid rgba(28,24,21,.13);border-radius:999px;padding:7px 12px;cursor:pointer;">ANOTHER LIKE IT</button>
+                    <button onClick="{{ sv.del }}" style="margin-left:auto;font-family:'Archivo',sans-serif;font-weight:800;font-size:12.5px;background:none;border:none;color:#B5502F;cursor:pointer;">&#10005;</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ noSaved }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;">
+              <div style="width:56px;height:56px;border:2px dashed rgba(28,24,21,.20);border-radius:50%;animation:sl-bob 2.4s ease-in-out infinite;"></div>
+              <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;">NOTHING IN THE STASH</div>
+              <div style="font-size:13.5px;color:#6E655A;font-weight:600;max-width:220px;">Save a route and it shows up here.</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showSettings }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Settings" style="position:absolute;inset:0;background:#F3EFE6;z-index:7;box-sizing:border-box;padding:calc(env(safe-area-inset-top, 0px) + 12px) 18px calc(env(safe-area-inset-bottom, 0px) + 20px);display:flex;flex-direction:column;gap:14px;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button onClick="{{ goHome }}" style="font-family:'Archivo',sans-serif;font-weight:800;font-size:12.5px;background:#FBF8F1;border:1px solid rgba(28,24,21,.13);border-radius:999px;padding:10px 15px;cursor:pointer;box-shadow:0 4px 12px rgba(28,24,21,.10);" style-active="transform:translateY(1px);box-shadow:0 1px 4px rgba(28,24,21,.08);">&#8592;</button>
+            <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:20px;">TUNE IT</div>
+          </div>
+          <div style="border:1px solid rgba(28,24,21,.13);border-radius:9px;background:#FBF8F1;padding:14px;display:flex;flex-direction:column;gap:8px;">
+            <div style="font-size:11.5px;font-weight:700;letter-spacing:1.5px;color:#6E655A;">FALLBACK START (WHEN GPS IS OFF)</div>
+            <input value="{{ defStart }}" onChange="{{ onDefStart }}" style="border:1px solid rgba(28,24,21,.13);border-radius:10px;padding:10px 12px;font-size:14px;font-weight:600;background:#F3EFE6;color:#1C1815;">
+          </div>
+          <div style="border:1px solid rgba(28,24,21,.13);border-radius:9px;background:#FBF8F1;padding:14px;display:flex;flex-direction:column;gap:10px;">
+            <div style="font-size:11.5px;font-weight:700;letter-spacing:1.5px;color:#6E655A;">SURFACES</div>
+            <div style="display:flex;gap:8px;">
+              <button onClick="{{ setPaved }}" style="{{ pavedStyle }}">PAVED ONLY</button>
+              <button onClick="{{ setHard }}" style="{{ hardStyle }}">PAVED + HARDPACK</button>
+            </div>
+          </div>
+          <div style="border:1px solid rgba(28,24,21,.13);border-radius:9px;background:#FBF8F1;padding:14px;display:flex;flex-direction:column;gap:10px;">
+            <div style="font-size:11.5px;font-weight:700;letter-spacing:1.5px;color:#6E655A;">UNITS</div>
+            <div style="display:flex;gap:8px;">
+              <button onClick="{{ setMi }}" style="{{ miStyle }}">MILES</button>
+              <button onClick="{{ setKm }}" style="{{ kmStyle }}">KILOMETERS</button>
+            </div>
+          </div>
+          <div style="border:1px solid rgba(28,24,21,.13);border-radius:9px;background:#FBF8F1;padding:14px;display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <div style="font-size:11.5px;font-weight:700;letter-spacing:1.5px;color:#6E655A;">CRUISING SPEED</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;">{{ speedLabel }}</div>
+            </div>
+            <input type="range" min="8" max="35" step="1" value="{{ speedVal }}" onChange="{{ onSpeed }}" style="width:100%;accent-color:#B5502F;">
+            <div style="font-size:11.5px;color:#6E655A;font-weight:600;">real-world average incl. lights &amp; stops — drives every ride-time guess</div>
+          </div>
+          <button onClick="{{ clearSaved }}" style="font-family:'Archivo',sans-serif;font-weight:800;font-size:13.5px;letter-spacing:.5px;color:#B5502F;background:#FBF8F1;border:1px solid rgba(166,79,46,.4);border-radius:9px;padding:13px;cursor:pointer;">CLEAR SAVED ROUTES</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showGenerating }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Generating" style="position:absolute;inset:0;background:#F3EFE6;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
+          <div style="width:70px;height:70px;border:4px solid rgba(28,24,21,.10);border-top-color:#B5502F;border-radius:50%;animation:sl-spin 1.1s linear infinite;"></div>
+          <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:16px;text-align:center;padding:0 30px;">{{ genMsg }}</div>
+          <div style="font-size:12.5px;color:#6E655A;font-weight:600;letter-spacing:1px;">BUILDING YOUR ROUTE</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom, 0px) + 108px);z-index:10;display:flex;justify-content:center;pointer-events:none;">
+          <div style="background:#1C1815;color:#F3EFE6;border-radius:999px;padding:10px 18px;font-family:'Archivo',sans-serif;font-weight:800;font-size:13.5px;letter-spacing:.5px;animation:sl-pop .2s ease-out;">{{ toastMsg }}</div>
+        </div>
+      </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:402,&quot;height&quot;:844},&quot;mapStart&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Big map&quot;,&quot;Big controls&quot;],&quot;default&quot;:&quot;Big map&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Home screen&quot;},&quot;routeLine&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Solid&quot;,&quot;Dashed&quot;],&quot;default&quot;:&quot;Solid&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Map&quot;},&quot;retroTint&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Map&quot;}}">
+class Component extends DCLogic {
+  state = {
+    screen: 'home', style: null, chip: 'med', useGps: true, stopCat: 'all',
+    route: null, generating: false, genIdx: 0, riding: false, rideStatus: '',
+    addStop: false, searchQ: '', stops: [], saved: [], toast: null, savedFlag: false, directions: false,
+    followCam: true, customMi: 10, deck: [], dx: 0, dy: 0, dragging: false, exit: null,
+    sheetPos: null, sheetDrag: false, gpsErr: null, relay: null, relayIdx: 0,
+    prefs: { units: 'mi', speed: 15, surface: 'paved', defStart: 'Oak Square, Brighton', v: 4 },
+  };
+  // sheet sits higher than before so the CTA clears the browser toolbar
+  SNAP_HI = 0.68;
+  // short phones need a taller sheet to fit the controls without squeezing the hit targets
+  get SNAP_LO() { return (window.innerHeight || 800) < 720 ? 0.26 : 0.32; }
+  GRAIN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='170' height='170' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E")`;
+  THEMES = {
+    A: { key: 'A', label: 'VELLUM',
+      sheetBg: 'linear-gradient(180deg, rgba(252,249,242,.94) 0%, rgba(240,235,224,.96) 100%)',
+      blur: 'saturate(150%) blur(22px)',
+      edge: '1px solid rgba(28,24,21,.10)',
+      shadow: 'inset 0 1px 0 rgba(255,255,255,.85), 0 -18px 40px rgba(28,24,21,.16)',
+      ink: '#1C1815', mute: '#6E655A', hair: 'rgba(28,24,21,.13)', handle: 'rgba(28,24,21,.22)',
+      accent: '#B5502F', accentGrad: 'linear-gradient(180deg,#C2603A 0%,#A9481F 100%)', accentInk: '#FBF8F1',
+      accentEdge: 'rgba(120,50,26,.55)', ctaShadow: '0 12px 26px rgba(140,58,32,.26), inset 0 1px 0 rgba(255,255,255,.5)',
+      link: '#B5502F', linkEdge: 'rgba(166,79,46,.4)',
+      chipOn: '#1C1815', chipOnInk: '#FBF8F1', chipOnEdge: 'rgba(28,24,21,.9)',
+      rowBg: 'rgba(255,255,255,.62)', rowSel: 'rgba(181,80,47,.09)', rowLift: '0 6px 14px rgba(28,24,21,.10)',
+      ring: 'rgba(28,24,21,.10)', field: 'rgba(255,255,255,.8)', glass: 'rgba(252,249,242,.86)',
+      scrim: 'linear-gradient(180deg, rgba(243,239,230,0) 0%, rgba(243,239,230,.32) 60%, rgba(243,239,230,.72) 100%)' },
+  };
+  theme = () => this.THEMES.A;
+  pickStyle = () => this.state.style || this.STYLES[Math.floor(Math.random() * this.STYLES.length)].id;
+  listRef = (el) => { this.listEl = el; };
+  sheetPos = () => (this.sheetDragging && this.sheetLive != null) ? this.sheetLive
+    : (this.state.sheetPos ?? ((this.props.mapStart ?? 'Big map') === 'Big map' ? this.SNAP_HI : this.SNAP_LO));
+  sheetRef = (el) => { this.sheetEl = el; };
+  gpsRef = (el) => { this.gpsEl = el; };
+  SHEET_EASE = 'top .42s cubic-bezier(.22,1,.3,1), height .42s cubic-bezier(.22,1,.3,1)';
+  // the sheet, the map pane and the GPS pill all move together — written straight to the DOM per frame
+  paintSheet = (p, ease) => {
+    const pct = (p * 100).toFixed(2) + '%';
+    const t = ease || 'none';
+    if (this.sheetEl) { this.sheetEl.style.transition = ease ? 'top .42s cubic-bezier(.22,1,.3,1)' : 'none'; this.sheetEl.style.top = pct; }
+    if (this.gpsEl) { this.gpsEl.style.transition = ease ? 'top .42s cubic-bezier(.22,1,.3,1)' : 'none'; this.gpsEl.style.top = 'calc(' + pct + ' - 70px)'; }
+  };
+  // the whole sheet is the swipe surface — anywhere below the map grabs it
+  onSheetDown = (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const t = e.target;
+    if (t && t.closest && t.closest('input')) return;
+    // let the options list scroll itself when it actually overflows
+    if (this.listEl && t && this.listEl.contains(t) && this.listEl.scrollHeight > this.listEl.clientHeight + 2) return;
+    this.swallowClick = false;
+    this.sheetOnHandle = !!(t && t.closest && t.closest('[data-sheet-handle]') && !t.closest('button'));
+    this.sheetFrom = e.clientY;
+    this.sheetBase = this.sheetPos();
+    this.sheetLive = this.sheetBase;
+    this.sheetLastY = e.clientY;
+    this.sheetLastT = performance.now();
+    this.sheetVel = 0;
+    this.sheetMoved = false;
+    this.sheetDragging = true;
+    if (this.sheetEl) this.sheetEl.style.willChange = 'top';
+    this.paintSheet(this.sheetBase);
+  };
+  onSheetMove = (e) => {
+    if (this.sheetFrom == null) return;
+    const dy = e.clientY - this.sheetFrom;
+    const now = performance.now();
+    if (now > this.sheetLastT) {
+      this.sheetVel = (e.clientY - this.sheetLastY) / (now - this.sheetLastT);
+      this.sheetLastY = e.clientY; this.sheetLastT = now;
+    }
+    if (Math.abs(dy) > 6) this.sheetMoved = true;
+    const h = window.innerHeight || 800;
+    let p = this.sheetBase + dy / h;
+    // rubber-band past the snaps instead of hard-stopping
+    if (p < this.SNAP_LO) p = this.SNAP_LO - (this.SNAP_LO - p) * 0.35;
+    if (p > this.SNAP_HI) p = this.SNAP_HI + (p - this.SNAP_HI) * 0.35;
+    this.sheetLive = p;
+    if (!this.sheetRaf) this.sheetRaf = requestAnimationFrame(() => { this.sheetRaf = 0; this.paintSheet(this.sheetLive); });
+  };
+  onSheetUp = () => {
+    if (this.sheetFrom == null) return;
+    this.sheetFrom = null;
+    this.sheetDragging = false;
+    if (this.sheetRaf) { cancelAnimationFrame(this.sheetRaf); this.sheetRaf = 0; }
+    const p = this.sheetLive ?? this.sheetBase;
+    const mid = (this.SNAP_LO + this.SNAP_HI) / 2;
+    const v = this.sheetVel || 0;
+    // a tap that never moved only toggles when it landed on the grab bar
+    if (!this.sheetMoved && !this.sheetOnHandle) {
+      this.sheetLive = this.sheetBase;
+      this.paintSheet(this.sheetBase);
+      return;
+    }
+    this.swallowClick = this.sheetMoved;
+    this.swallowAt = Date.now();
+    const snap = this.sheetMoved
+      ? (Math.abs(v) > 0.35 ? (v < 0 ? this.SNAP_LO : this.SNAP_HI) : (p > mid ? this.SNAP_HI : this.SNAP_LO))
+      : (this.sheetBase > mid ? this.SNAP_LO : this.SNAP_HI);
+    this.sheetLive = snap;
+    this.paintSheet(snap, this.SHEET_EASE);
+    this.setState({ sheetPos: snap, sheetDrag: false });
+    if (this.sheetEl) setTimeout(() => { if (this.sheetEl && !this.sheetDragging) this.sheetEl.style.willChange = 'auto'; }, 460);
+    clearTimeout(this.sheetTimer);
+    // no resize to correct for any more — just glide the framing to match the new band
+    this.lastGesture = Date.now();
+    this.reframe(false, true);
+  };
+  onSheetClick = (e) => {
+    if (!this.swallowClick) return;
+    if (Date.now() - (this.swallowAt || 0) > 320) { this.swallowClick = false; return; }
+    this.swallowClick = false;
+    e.stopPropagation();
+    e.preventDefault();
+  };
+  locate = (manual) => {
+    if (!navigator.geolocation) { this.setState({ gpsErr: 'nogps' }); return; }
+    if (!window.isSecureContext) {
+      this.setState({ gpsErr: 'https' });
+      if (manual) this.toast('Phone GPS needs https:// (or localhost)');
+      return;
+    }
+    if (manual) this.toast('Finding you\u2026');
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const ll = [pos.coords.latitude, pos.coords.longitude];
+      this.START = { lat: ll[0], lng: ll[1] };
+      this.setState({ gpsStart: true, gpsErr: null, useGps: true });
+      if (this.map) {
+        if (this.startMarker) this.startMarker.setLatLng(ll);
+        if (this.state.screen === 'home') this.camMove(() => this.map.setView(ll, 15));
+      }
+      this.fetchWeather();
+      if (manual) this.toast('Using your location');
+    }, (err) => {
+      this.setState({ gpsErr: err.code === 1 ? 'denied' : 'fail' });
+      if (manual) this.toast(err.code === 1 ? 'Location permission denied' : 'Couldn\u2019t get a GPS fix');
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+  };
+  mapEl = React.createRef();
+  START = { lat: 42.3489, lng: -71.1608 };
+  STYLES = [
+    { id: 'hood', name: 'Hood Hopper', badge: 'HOOD', range: [3, 9], dot: '#B08428', surf: [44, 8, 48] },
+    { id: 'trail', name: 'Path & Trail', badge: 'TRAIL', range: [5, 13], dot: '#5A6B44', surf: [34, 42, 24] },
+    { id: 'water', name: 'Salt & Fresh', badge: 'WATER', range: [7, 17], dot: '#2B5470', surf: [46, 28, 26] },
+  ];
+  MSGS = ['Finding bike lanes…', 'Mapping the loop…', 'Checking the roads…', 'Measuring the climb…', 'Looking for water…', 'Picking quiet streets…'];
+  TAGBADGE = { ocean: 'OCEAN', lake: 'LAKE', river: 'RIVER', trail: 'TRAIL', hood: 'HOOD' };
+  TAGDOT = { ocean: '#2B5470', lake: '#4C5B3C', river: '#3E6E80', trail: '#5A6B44', hood: '#B08428' };
+  // real destinations worth riding to — ocean, ponds, rail trails, squares
+  ANCHORS = [
+    { name: 'Castle Island', lat: 42.3376, lng: -71.0122, tag: 'ocean' },
+    { name: 'Pleasure Bay', lat: 42.3395, lng: -71.0165, tag: 'ocean' },
+    { name: 'Carson Beach', lat: 42.3316, lng: -71.0355, tag: 'ocean' },
+    { name: 'Seaport Harborwalk', lat: 42.3520, lng: -71.0430, tag: 'ocean' },
+    { name: 'Navy Yard, Charlestown', lat: 42.3735, lng: -71.0530, tag: 'ocean' },
+    { name: 'Constitution Beach', lat: 42.3830, lng: -71.0000, tag: 'ocean' },
+    { name: 'Winthrop Shore Drive', lat: 42.3760, lng: -70.9700, tag: 'ocean' },
+    { name: 'Deer Island', lat: 42.3496, lng: -70.9600, tag: 'ocean' },
+    { name: 'Revere Beach', lat: 42.4090, lng: -70.9900, tag: 'ocean' },
+    { name: 'Nahant Beach', lat: 42.4380, lng: -70.9520, tag: 'ocean' },
+    { name: 'Lynn Shore Drive', lat: 42.4620, lng: -70.9370, tag: 'ocean' },
+    { name: 'Wollaston Beach', lat: 42.2830, lng: -71.0110, tag: 'ocean' },
+    { name: 'Marina Bay, Squantum', lat: 42.2960, lng: -71.0250, tag: 'ocean' },
+    { name: 'Belle Isle Marsh', lat: 42.3880, lng: -70.9930, tag: 'ocean' },
+    { name: 'Jamaica Pond', lat: 42.3170, lng: -71.1200, tag: 'lake' },
+    { name: 'Chestnut Hill Reservoir', lat: 42.3355, lng: -71.1565, tag: 'lake' },
+    { name: 'Fresh Pond', lat: 42.3860, lng: -71.1470, tag: 'lake' },
+    { name: 'Spy Pond, Arlington', lat: 42.4090, lng: -71.1500, tag: 'lake' },
+    { name: 'Mystic Lakes', lat: 42.4380, lng: -71.1440, tag: 'lake' },
+    { name: 'Sandy Beach, Winchester', lat: 42.4415, lng: -71.1490, tag: 'lake' },
+    { name: 'Horn Pond, Woburn', lat: 42.4720, lng: -71.1520, tag: 'lake' },
+    { name: 'Lake Quannapowitt', lat: 42.5060, lng: -71.0740, tag: 'lake' },
+    { name: 'Crystal Lake, Newton', lat: 42.3260, lng: -71.1930, tag: 'lake' },
+    { name: 'Hammond Pond', lat: 42.3225, lng: -71.1810, tag: 'lake' },
+    { name: 'Houghton\u2019s Pond', lat: 42.2100, lng: -71.0900, tag: 'lake' },
+    { name: 'Turtle Pond, Stony Brook', lat: 42.2745, lng: -71.1440, tag: 'lake' },
+    { name: 'Esplanade Hatch Shell', lat: 42.3560, lng: -71.0740, tag: 'river' },
+    { name: 'North Point Park', lat: 42.3720, lng: -71.0745, tag: 'river' },
+    { name: 'Watertown Dam', lat: 42.3655, lng: -71.1830, tag: 'river' },
+    { name: 'Millennium Park', lat: 42.2790, lng: -71.1685, tag: 'river' },
+    { name: 'Neponset Greenway', lat: 42.2960, lng: -71.0430, tag: 'river' },
+    { name: 'Mystic River Reservation', lat: 42.4020, lng: -71.0900, tag: 'river' },
+    { name: 'Lakes District, Newton', lat: 42.3390, lng: -71.2400, tag: 'river' },
+    { name: 'Minuteman Bikeway', lat: 42.4155, lng: -71.1560, tag: 'trail' },
+    { name: 'Somerville Community Path', lat: 42.3970, lng: -71.1225, tag: 'trail' },
+    { name: 'Riverway, Emerald Necklace', lat: 42.3355, lng: -71.1105, tag: 'trail' },
+    { name: 'Southwest Corridor', lat: 42.3300, lng: -71.0900, tag: 'trail' },
+    { name: 'Arnold Arboretum', lat: 42.2980, lng: -71.1240, tag: 'trail' },
+    { name: 'Middlesex Fells', lat: 42.4400, lng: -71.1030, tag: 'trail' },
+    { name: 'Blue Hills Trailside', lat: 42.2145, lng: -71.0930, tag: 'trail' },
+    { name: 'Mass Central Rail Trail', lat: 42.3785, lng: -71.2290, tag: 'trail' },
+    { name: 'Neponset Trail, Mattapan', lat: 42.2680, lng: -71.0930, tag: 'trail' },
+    { name: 'Coolidge Corner', lat: 42.3425, lng: -71.1211, tag: 'hood' },
+    { name: 'Harvard Square', lat: 42.3736, lng: -71.1190, tag: 'hood' },
+    { name: 'Davis Square', lat: 42.3967, lng: -71.1226, tag: 'hood' },
+    { name: 'Watertown Square', lat: 42.3660, lng: -71.1830, tag: 'hood' },
+    { name: 'Newton Centre', lat: 42.3290, lng: -71.1930, tag: 'hood' },
+    { name: 'Cleveland Circle', lat: 42.3365, lng: -71.1490, tag: 'hood' },
+    { name: 'Nubian Square', lat: 42.3290, lng: -71.0830, tag: 'hood' },
+    { name: 'Central Square', lat: 42.3650, lng: -71.1030, tag: 'hood' },
+    { name: 'Kendall Square', lat: 42.3625, lng: -71.0860, tag: 'hood' },
+    { name: 'Assembly Row', lat: 42.3925, lng: -71.0800, tag: 'hood' },
+    { name: 'Moody Street, Waltham', lat: 42.3760, lng: -71.2360, tag: 'hood' },
+    { name: 'Roslindale Village', lat: 42.2870, lng: -71.1270, tag: 'hood' },
+    { name: 'Medford Square', lat: 42.4180, lng: -71.1060, tag: 'hood' },
+    { name: 'Maverick Square', lat: 42.3690, lng: -71.0390, tag: 'hood' },
+    { name: 'Brookline Village', lat: 42.3320, lng: -71.1180, tag: 'hood' },
+    { name: 'Broadway, Southie', lat: 42.3370, lng: -71.0470, tag: 'hood' },
+    { name: 'JP Centre', lat: 42.3110, lng: -71.1140, tag: 'hood' },
+    { name: 'Porter Square', lat: 42.3880, lng: -71.1190, tag: 'hood' },
+    { name: 'Belmont Center', lat: 42.3960, lng: -71.1780, tag: 'hood' },
+    { name: 'City Square, Charlestown', lat: 42.3780, lng: -71.0620, tag: 'hood' },
+    { name: 'Malden Center', lat: 42.4270, lng: -71.0740, tag: 'hood' },
+    { name: 'Dedham Square', lat: 42.2430, lng: -71.1660, tag: 'hood' },
+    { name: 'Lexington Center', lat: 42.4470, lng: -71.2260, tag: 'hood' },
+    { name: 'Quincy Center', lat: 42.2510, lng: -71.0020, tag: 'hood' },
+  ];
+  BIZ = [
+    { name: 'Tatte Bakery, Brookline', cat: 'coffee · pastry', kind: 'food', lat: 42.3465, lng: -71.1270 },
+    { name: "Mike's Pastry, North End", cat: 'cannoli', kind: 'food', lat: 42.3634, lng: -71.0560 },
+    { name: 'Flour Bakery, Fort Point', cat: 'coffee · sandwiches', kind: 'food', lat: 42.3510, lng: -71.0500 },
+    { name: 'JP Licks, Jamaica Plain', cat: 'ice cream', kind: 'food', lat: 42.3095, lng: -71.1130 },
+    { name: "Cutty's, Brookline", cat: 'sandwiches', kind: 'food', lat: 42.3320, lng: -71.1160 },
+    { name: 'Sofra Bakery, Cambridge', cat: 'mezze · pastry', kind: 'food', lat: 42.3760, lng: -71.1420 },
+    { name: "Christina's, Inman Square", cat: 'ice cream', kind: 'food', lat: 42.3730, lng: -71.1010 },
+    { name: "Anna's Taqueria, Brookline", cat: 'burritos', kind: 'food', lat: 42.3428, lng: -71.1220 },
+    { name: 'Union Square Donuts, Somerville', cat: 'donuts · coffee', kind: 'food', lat: 42.3800, lng: -71.0950 },
+    { name: 'Bunker Hill Monument', cat: 'Charlestown · 294 steps up', kind: 'history', lat: 42.3763, lng: -71.0609 },
+    { name: 'USS Constitution', cat: 'Navy Yard · oldest commissioned warship', kind: 'history', lat: 42.3724, lng: -71.0567 },
+    { name: 'Paul Revere House', cat: 'North End · built 1680', kind: 'history', lat: 42.3637, lng: -71.0537 },
+    { name: 'Old North Church', cat: 'North End · one if by land', kind: 'history', lat: 42.3663, lng: -71.0544 },
+    { name: 'Faneuil Hall', cat: 'Downtown · cradle of liberty', kind: 'history', lat: 42.3600, lng: -71.0568 },
+    { name: 'Fort Independence, Castle Island', cat: 'South Boston · granite fort', kind: 'history', lat: 42.3376, lng: -71.0122 },
+    { name: 'Mount Auburn Cemetery', cat: 'Cambridge · first garden cemetery', kind: 'history', lat: 42.3720, lng: -71.1450 },
+    { name: 'Longfellow House', cat: 'Brattle St · Washington slept here', kind: 'history', lat: 42.3767, lng: -71.1258 },
+    { name: 'Larz Anderson Auto Museum', cat: 'Brookline · oldest car collection', kind: 'history', lat: 42.3145, lng: -71.1400 },
+    { name: 'Boston Public Library, McKim', cat: 'Copley · courtyard + Bates Hall', kind: 'sight', lat: 42.3494, lng: -71.0784 },
+    { name: 'Trinity Church, Copley Square', cat: 'Back Bay · Richardson Romanesque', kind: 'sight', lat: 42.3496, lng: -71.0759 },
+    { name: 'MIT Great Dome', cat: 'Cambridge · Killian Court lawn', kind: 'sight', lat: 42.3601, lng: -71.0919 },
+    { name: 'Peters Hill Summit', cat: 'Arboretum · best skyline view', kind: 'sight', lat: 42.2965, lng: -71.1290 },
+    { name: 'Dorchester Heights Monument', cat: 'South Boston · harbor panorama', kind: 'sight', lat: 42.3330, lng: -71.0470 },
+    { name: 'Charles River Esplanade, Hatch Shell', cat: 'Back Bay · river path', kind: 'sight', lat: 42.3565, lng: -71.0790 },
+    { name: 'Marina Bay Boardwalk, Squantum', cat: 'Quincy · sunset over the bay', kind: 'sight', lat: 42.2960, lng: -71.0250 },
+    { name: 'Arnold Arboretum', cat: 'Jamaica Plain · 281 acres, no cars', kind: 'park', lat: 42.2995, lng: -71.1245 },
+    { name: 'Boston Common', cat: 'Downtown · oldest public park', kind: 'park', lat: 42.3550, lng: -71.0656 },
+    { name: 'Jamaica Pond Boathouse', cat: 'Emerald Necklace · 1.5 mi loop', kind: 'park', lat: 42.3170, lng: -71.1200 },
+    { name: 'Fresh Pond Reservation', cat: 'Cambridge · 2.25 mi perimeter', kind: 'park', lat: 42.3860, lng: -71.1490 },
+    { name: 'Chestnut Hill Reservoir', cat: 'Brighton · 1.5 mi loop', kind: 'park', lat: 42.3355, lng: -71.1560 },
+    { name: 'Belle Isle Marsh Reservation', cat: 'East Boston · last salt marsh', kind: 'park', lat: 42.3880, lng: -70.9930 },
+    { name: 'Fenway Park', cat: 'Kenmore · Green Monster', kind: 'tourist', lat: 42.3467, lng: -71.0972 },
+    { name: 'Museum of Fine Arts', cat: 'Fenway · Huntington Ave', kind: 'tourist', lat: 42.3394, lng: -71.0940 },
+    { name: 'Isabella Stewart Gardner Museum', cat: 'Fenway · courtyard palace', kind: 'tourist', lat: 42.3381, lng: -71.0992 },
+    { name: 'Institute of Contemporary Art', cat: 'Seaport · harborwalk', kind: 'tourist', lat: 42.3531, lng: -71.0466 },
+    { name: 'Boston Tea Party Ships', cat: 'Fort Point Channel', kind: 'tourist', lat: 42.3521, lng: -71.0552 },
+    { name: 'Public Garden Swan Boats', cat: 'Back Bay · lagoon', kind: 'tourist', lat: 42.3541, lng: -71.0704 },
+    { name: 'Harvard Yard', cat: 'Cambridge · the brick everything', kind: 'tourist', lat: 42.3744, lng: -71.1169 },
+    { name: 'Franklin Park Zoo', cat: 'Dorchester · Emerald Necklace', kind: 'tourist', lat: 42.3020, lng: -71.0870 },
+  ];
+  BAKED = [[42.3489,-71.1608],[42.3496,-71.1575],[42.3502,-71.1541],[42.3512,-71.1505],[42.3527,-71.1471],[42.3540,-71.1440],[42.3558,-71.1452],[42.3572,-71.1479],[42.3585,-71.1512],[42.3596,-71.1548],[42.3588,-71.1585],[42.3570,-71.1612],[42.3548,-71.1633],[42.3524,-71.1645],[42.3503,-71.1634],[42.3489,-71.1608]];
+
+  BAKED_B = [[42.3489,-71.1608],[42.3466,-71.1642],[42.3441,-71.1668],[42.3418,-71.1702],[42.3402,-71.1749],[42.3411,-71.1796],[42.3437,-71.1822],[42.3468,-71.1815],[42.3494,-71.1783],[42.3512,-71.1740],[42.3519,-71.1692],[42.3508,-71.1646],[42.3489,-71.1608]];
+  BAKED_C = [[42.3489,-71.1608],[42.3515,-71.1601],[42.3544,-71.1592],[42.3573,-71.1600],[42.3599,-71.1622],[42.3616,-71.1660],[42.3607,-71.1704],[42.3580,-71.1727],[42.3549,-71.1731],[42.3521,-71.1714],[42.3502,-71.1681],[42.3492,-71.1644],[42.3489,-71.1608]];
+
+  componentDidMount() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('squiggle.saved') || '[]');
+      const prefs = JSON.parse(localStorage.getItem('squiggle.prefs') || 'null');
+      const merged = prefs ? { ...this.state.prefs, ...prefs } : this.state.prefs;
+      if (!prefs || prefs.v !== 4) { merged.speed = 15; merged.v = 4; delete merged.rangeMi; }
+      this.setState({ saved, prefs: merged });
+    } catch (e) {}
+    this.tries = 0;
+    this.initMap();
+    this.fetchWeather();
+    this.locate();
+  }
+  componentWillUnmount() { clearInterval(this.genTimer); clearInterval(this.rideTimer); clearTimeout(this.toastTimer); clearTimeout(this.ivTimer); clearTimeout(this.roTimer); if (this.ro) this.ro.disconnect(); if (this.watchId != null) navigator.geolocation.clearWatch(this.watchId); }
+
+  initMap = () => {
+    if (!window.L || !this.mapEl.current) { if (this.tries++ < 100) setTimeout(this.initMap, 100); return; }
+    // pin the exact Leaflet copy that builds the map — a second copy on window.L breaks every layer
+    const L = this.L = window.L;
+    this.map = L.map(this.mapEl.current, { zoomControl: false, attributionControl: false, preferCanvas: false, tap: false });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png', { subdomains: 'abcd', maxZoom: 19 }).addTo(this.map);
+    this.map.setView([this.START.lat, this.START.lng], 14);
+    // explicit SVG renderer: the shared default one can lose its bounds across layout swaps
+    this.rend = L.svg({ padding: 0.4 }).addTo(this.map);
+    this.routeLayer = L.layerGroup().addTo(this.map);
+    this.stopLayer = L.layerGroup().addTo(this.map);
+    this.startMarker = L.marker([this.START.lat, this.START.lng], { icon: L.divIcon({ className: '', html: '<div style="width:20px;height:20px;border-radius:50%;background:#4C5B3C;border:1px solid rgba(28,24,21,.13);box-shadow:0 2px 5px rgba(0,0,0,.3);"></div>', iconSize: [20, 20], iconAnchor: [10, 10] }) }).addTo(this.map);
+    this.applyTint();
+    // the map container animates between layouts — keep Leaflet's tile grid in sync
+    const el = this.mapEl.current;
+    if (window.ResizeObserver) {
+      this.ro = new ResizeObserver(() => {
+        clearTimeout(this.roTimer);
+        // never re-fit mid-gesture: fitBounds during a drag is what made the sheet stutter
+        this.roTimer = setTimeout(() => { if (this.sheetDragging || !this.map || Date.now() - (this.lastGesture || 0) < 1200) return; this.map.invalidateSize({ animate: false }); this.reframe(); }, 140);
+      });
+      this.ro.observe(el);
+    }
+    el.addEventListener('transitionend', () => { if (this.map) { this.map.invalidateSize({ animate: false }); this.reframe(); } });
+    // any hand-driven pan/zoom drops the camera out of lock
+    const release = () => { if (!this.programmatic && this.state.followCam) this.setState({ followCam: false }); };
+    this.map.on('dragstart', release);
+    this.map.on('zoomstart', release);
+    this.map.on('wheel', release);
+  };
+  applyTint = () => {
+    if (!this.map) return;
+    const p = this.map.getPane('tilePane');
+    p.style.filter = (this.props.retroTint ?? true) ? 'saturate(0.6) sepia(0.22) brightness(1.04) contrast(0.96)' : '';
+  };
+  componentDidUpdate(pp, ps) {
+    if (this.map && pp) {
+      if (pp.retroTint !== this.props.retroTint) this.applyTint();
+      if (pp.routeLine !== this.props.routeLine && this.state.route) this.drawRoute();
+      if (pp.mapStart !== this.props.mapStart) this.setState({ followCam: true, sheetPos: null });
+    }
+    if (ps && ps.deck !== this.state.deck) this.pruneMinis();
+    const screenChanged = ps && ps.screen !== this.state.screen;
+    const layoutChanged = pp && pp.mapStart !== this.props.mapStart;
+    if (screenChanged || layoutChanged) {
+      clearTimeout(this.ivTimer);
+      this.ivTimer = setTimeout(() => { if (!this.map || Date.now() - (this.lastGesture || 0) < 1200) return; this.map.invalidateSize(); this.reframe(); }, 500);
+    }
+  }
+  // programmatic camera moves shouldn't count as the user taking manual control
+  camMove = (fn) => { this.programmatic = true; fn(); setTimeout(() => { this.programmatic = false; }, 350); };
+  reframe = (force, smooth) => {
+    if (!this.map) return;
+    if (!force && !this.state.followCam) return;
+    try {
+    const { screen, route } = this.state;
+    if ((screen === 'result') && route && this.poly) {
+      this.camMove(() => this.map.fitBounds(this.poly.getBounds(), { paddingTopLeft: [40, 230], paddingBottomRight: [40, 160] }));
+    } else if (screen === 'home') {
+      // the map pane is always full-height now; frame the pin inside the band the sheet leaves open.
+      // one animated panTo only — an un-animated setView here is what made the map cut on release
+      const el = this.mapEl.current;
+      const H = el ? el.clientHeight : 0;
+      const pad = H ? Math.max(0, Math.round(H * (1 - this.sheetPos()))) : 0;
+      const ll = this.startMarker ? this.startMarker.getLatLng() : [this.START.lat, this.START.lng];
+      const z = this.state.gpsStart ? 15 : 14;
+      if (this.map.getZoom() !== z) {
+        this.camMove(() => this.map.setView(this.map.unproject(this.map.project(ll, z).add([0, pad / 2]), z), z, { animate: false }));
+      } else {
+        const cz = this.map.getZoom();
+        const target = this.map.unproject(this.map.project(ll, cz).add([0, pad / 2]), cz);
+        this.camMove(() => this.map.panTo(target, { animate: !!smooth, duration: 0.36, easeLinearity: 0.25, noMoveStart: true }));
+      }
+    }
+    } catch (e) {}
+  };
+
+  offset(km, brg) {
+    const R = 6371, d = km / R, t = brg * Math.PI / 180;
+    const la1 = this.START.lat * Math.PI / 180, lo1 = this.START.lng * Math.PI / 180;
+    const la2 = Math.asin(Math.sin(la1) * Math.cos(d) + Math.cos(la1) * Math.sin(d) * Math.cos(t));
+    const lo2 = lo1 + Math.atan2(Math.sin(t) * Math.sin(d) * Math.cos(la1), Math.cos(d) - Math.sin(la1) * Math.sin(la2));
+    return { lat: la2 * 180 / Math.PI, lng: lo2 * 180 / Math.PI };
+  }
+  hav(a, b) {
+    const R = 3958.8, dLa = (b[0] - a[0]) * Math.PI / 180, dLo = (b[1] - a[1]) * Math.PI / 180;
+    const x = Math.sin(dLa / 2) ** 2 + Math.cos(a[0] * Math.PI / 180) * Math.cos(b[0] * Math.PI / 180) * Math.sin(dLo / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(x));
+  }
+  lineDist(cs) { let d = 0; for (let i = 1; i < cs.length; i++) d += this.hav(cs[i - 1], cs[i]); return d; }
+
+  bearingOf(a, b) {
+    const la1 = a[0] * Math.PI / 180, la2 = b[0] * Math.PI / 180, dLo = (b[1] - a[1]) * Math.PI / 180;
+    const y = Math.sin(dLo) * Math.cos(la2);
+    const x = Math.cos(la1) * Math.sin(la2) - Math.sin(la1) * Math.cos(la2) * Math.cos(dLo);
+    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+  }
+  turnsFromGeom(cs) {
+    let turns = 0, prev = null;
+    const step = Math.max(1, Math.floor(cs.length / 120));
+    for (let i = step; i < cs.length; i += step) {
+      const b = this.bearingOf(cs[i - step], cs[i]);
+      if (prev != null) { let d = Math.abs(b - prev); if (d > 180) d = 360 - d; if (d > 45) turns++; }
+      prev = b;
+    }
+    return turns;
+  }
+  TURN_TYPES = ['turn', 'fork', 'end of road', 'roundabout', 'rotary', 'merge', 'continue', 'new name'];
+  DIRW = { left: 'Turn left', right: 'Turn right', 'slight left': 'Bear left', 'slight right': 'Bear right', 'sharp left': 'Hard left', 'sharp right': 'Hard right', uturn: 'Bang a U-ey' };
+  compass = (b) => ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(((((b || 0) % 360) + 360) % 360) / 45) % 8];
+  stepText(s) {
+    const m = s.maneuver || {}, nm = s.name || '';
+    if (m.type === 'depart') return 'Head ' + this.compass(m.bearing_after) + (nm ? ' on ' + nm : '');
+    if (m.type === 'arrive') return 'Back where you started';
+    if (m.type === 'roundabout' || m.type === 'rotary') return 'Take the rotary' + (nm ? ' toward ' + nm : '');
+    const w = this.DIRW[m.modifier];
+    if (!w) return nm ? 'Stay on ' + nm : 'Keep going straight';
+    return w + (nm ? ' onto ' + nm : '');
+  }
+  fetchRoute(wps) {
+    const str = wps.map(p => p.lng + ',' + p.lat).join(';');
+    return fetch('https://routing.openstreetmap.de/routed-bike/route/v1/driving/' + str + '?overview=full&geometries=geojson&steps=true&continue_straight=true')
+      .then(r => r.json())
+      .then(j => {
+        const rt = j.routes[0];
+        const coords = rt.geometry.coordinates.map(c => [c[1], c[0]]);
+        let turns = 0, run = 0, maxRun = 0;
+        const steps = [];
+        (rt.legs || []).forEach(l => (l.steps || []).forEach(s => {
+          const m = s.maneuver || {}, mod = m.modifier || '';
+          const isTurn = this.TURN_TYPES.indexOf(m.type) >= 0 && !!mod && mod !== 'straight';
+          if (isTurn) { turns++; if (run > maxRun) maxRun = run; run = 0; }
+          run += (s.distance || 0);
+          const text = this.stepText(s), dmi = (s.distance || 0) / 1609.34;
+          const last = steps[steps.length - 1];
+          if (last && last.text === text) last.distMi += dmi;
+          else steps.push({ text, distMi: dmi, turn: isTurn });
+        }));
+        if (run > maxRun) maxRun = run;
+        return { coords, distMi: rt.distance / 1609.34, turns: turns || this.turnsFromGeom(coords), maxRunMi: maxRun / 1609.34, steps };
+      })
+      .catch(() => {
+        const set = [this.BAKED, this.BAKED_B, this.BAKED_C];
+        this.bakedIdx = ((this.bakedIdx == null ? -1 : this.bakedIdx) + 1) % set.length;
+        const c = set[this.bakedIdx];
+        return { coords: c, distMi: this.lineDist(c), turns: this.turnsFromGeom(c), maxRunMi: null, steps: [] };
+      });
+  }
+  // real DEM sampling for climb, real current conditions for the ride
+  fetchElevation(coords) {
+    const n = 24, pts = [];
+    for (let i = 0; i < n; i++) pts.push(coords[Math.floor(i * (coords.length - 1) / (n - 1))]);
+    const la = pts.map(p => p[0].toFixed(4)).join(','), lo = pts.map(p => p[1].toFixed(4)).join(',');
+    return fetch('https://api.open-meteo.com/v1/elevation?latitude=' + la + '&longitude=' + lo)
+      .then(r => r.json())
+      .then(j => {
+        const e = j.elevation || [];
+        let gain = 0;
+        for (let i = 1; i < e.length; i++) { const d = e[i] - e[i - 1]; if (d > 0) gain += d; }
+        return { climbFt: Math.round(gain * 3.28084), peakFt: e.length ? Math.round(Math.max.apply(null, e) * 3.28084) : null };
+      })
+      .catch(() => ({ climbFt: null, peakFt: null }));
+  }
+  WX = { 0: 'CLEAR', 1: 'MOSTLY CLEAR', 2: 'PARTLY CLOUDY', 3: 'OVERCAST', 45: 'FOG', 48: 'FOG', 51: 'DRIZZLE', 53: 'DRIZZLE', 55: 'DRIZZLE', 61: 'RAIN', 63: 'RAIN', 65: 'HEAVY RAIN', 71: 'SNOW', 73: 'SNOW', 75: 'HEAVY SNOW', 80: 'SHOWERS', 81: 'SHOWERS', 82: 'DOWNPOUR', 95: 'THUNDER', 96: 'THUNDER', 99: 'THUNDER' };
+  fetchWeather = () => {
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=' + this.START.lat.toFixed(3) + '&longitude=' + this.START.lng.toFixed(3) + '&current=temperature_2m,wind_speed_10m,wind_direction_10m,weather_code&daily=sunset&forecast_days=1&timezone=auto&temperature_unit=fahrenheit&wind_speed_unit=mph')
+      .then(r => r.json())
+      .then(j => {
+        const c = j.current || {};
+        let sunset = null;
+        try {
+          const d = new Date(j.daily.sunset[0]);
+          let h = d.getHours();
+          const mm = String(d.getMinutes()).padStart(2, '0'), ap = h >= 12 ? 'p' : 'a';
+          h = h % 12 || 12;
+          sunset = h + ':' + mm + ap;
+        } catch (e) {}
+        this.setState({ weather: { temp: Math.round(c.temperature_2m), wind: Math.round(c.wind_speed_10m), dir: this.compass(c.wind_direction_10m), label: this.WX[c.weather_code] || '\u2014', sunset } });
+      })
+      .catch(() => {});
+  };
+
+  NOUNS = ['Shuffle', 'Wiggle', 'Ramble', 'Cruise', 'Scoot', 'Grinder', 'Meander', 'Rip', 'Roll', 'Circuit', 'Crawl', 'Wander'];
+  makeName(anchor, distMi, tag) {
+    const pick = (a) => a[Math.floor(Math.random() * a.length)];
+    const place = anchor ? anchor.name.split(',')[0] : 'Brighton';
+    const noun = distMi > 15 ? pick(['Grinder', 'Long Haul', 'Slog', 'Marathon']) : pick(this.NOUNS);
+    const patterns = [
+      () => place + ' ' + noun,
+      () => 'Wicked ' + noun + ' to ' + place,
+      () => noun + ' Out to ' + place,
+      () => 'Bang a Uey at ' + place,
+      () => 'Dunks Run via ' + place,
+      () => 'Two Wheels to ' + place,
+      () => place + ' and Back',
+      () => 'Long Way to ' + place,
+      () => 'Ol\u2019 ' + place + ' ' + noun,
+    ];
+    if (tag === 'ocean') patterns.push(() => 'Saltwater ' + noun, () => place + ' Sea Breeze', () => 'Smell the Ocean at ' + place);
+    if (tag === 'lake') patterns.push(() => 'Pond Hop to ' + place, () => place + ' Water Loop');
+    if (tag === 'trail') patterns.push(() => place + ' Path ' + noun, () => 'Rail Trail ' + noun);
+    const hellish = [() => 'Hell of a ' + noun + ' to ' + place, () => place + ' Hell Loop'];
+    for (let i = 0; i < 8; i++) {
+      const name = Math.random() < 0.12 ? pick(hellish)() : pick(patterns)();
+      if (name !== this.lastName) { this.lastName = name; return name; }
+    }
+    return place + ' ' + noun;
+  }
+
+  targetMi(st) {
+    if (this.state.chip === 'custom') return Math.max(1, Math.min(40, +this.state.customMi || 10));
+    const t = { short: 0.15, med: 0.5, long: 0.92 }[this.state.chip];
+    return (st.range[0] + (st.range[1] - st.range[0]) * t) * (0.94 + Math.random() * 0.14);
+  }
+  anchorPool = (styleId) => {
+    const A = this.ANCHORS;
+    if (styleId === 'water') return A.filter(a => a.tag === 'ocean' || a.tag === 'lake' || (a.tag === 'river' && Math.random() < 0.2));
+    // paths are shared with walkers — mix real trail destinations with street-side squares
+    if (styleId === 'trail') return A.filter(a => a.tag === 'trail' || (a.tag === 'river' && Math.random() < 0.5) || (a.tag === 'hood' && Math.random() < 0.55));
+    return A.filter(a => a.tag === 'hood' || (a.tag === 'lake' && Math.random() < 0.3));
+  };
+  // pick real destinations whose loop length lands near the target, ordered around the compass
+  pickCombo = (target, styleId, avoid) => {
+    const pool = this.anchorPool(styleId);
+    if (!pool.length) return null;
+    const S = [this.START.lat, this.START.lng], cand = [];
+    for (let i = 0; i < 500; i++) {
+      const rn = Math.random();
+      const n = target < 9 ? (rn < 0.45 ? 1 : 2) : (rn < 0.45 ? 2 : 3);
+      const pick = [];
+      for (let k = 0; k < n; k++) { const a = pool[Math.floor(Math.random() * pool.length)]; if (pick.indexOf(a) < 0) pick.push(a); }
+      if (!pick.length) continue;
+      if (avoid && pick.some(a => a.name === avoid)) continue;
+      pick.sort((a, b) => this.bearingOf(S, [a.lat, a.lng]) - this.bearingOf(S, [b.lat, b.lng]));
+      let est = 0, cur = S;
+      pick.forEach(a => { est += this.hav(cur, [a.lat, a.lng]); cur = [a.lat, a.lng]; });
+      est = (est + this.hav(cur, S)) * 1.27;
+      cand.push({ pick, est, err: Math.abs(est - target) / target });
+    }
+    if (!cand.length) return null;
+    cand.sort((a, b) => a.err - b.err);
+    const top = cand.slice(0, 8);
+    return top[Math.floor(Math.random() * top.length)];
+  };
+  buildRoute = (styleId, opts = {}) => {
+    const st = this.STYLES.find(s => s.id === styleId);
+    const target = this.targetMi(st);
+    const attempt = (t, tries) => {
+      const combo = this.pickCombo(t, styleId, opts.reroll ? this.lastAnchor : null);
+      const via = combo ? combo.pick.map(a => ({ lat: a.lat, lng: a.lng })) : [this.offset(t * 1.609 / 3.2, Math.random() * 360)];
+      return this.fetchRoute([this.START, ...via, this.START]).then(r => {
+        const ratio = r.distMi / target;
+        // routing reality rarely matches the crow-flight guess — retune once or twice
+        if (tries < 2 && (ratio < 0.78 || ratio > 1.3)) return attempt(t / Math.max(0.45, Math.min(2.4, ratio)), tries + 1);
+        return { r, combo };
+      });
+    };
+    return attempt(target, 0)
+      .then(({ r, combo }) => this.fetchElevation(r.coords).then(el => ({ r, combo, el })))
+      .then(({ r, combo, el }) => {
+        const anchors = combo ? combo.pick : [];
+        const S = [this.START.lat, this.START.lng];
+        let outMi = 0;
+        for (let i = 0; i < r.coords.length; i += 3) { const d = this.hav(S, r.coords[i]); if (d > outMi) outMi = d; }
+        let far = null;
+        anchors.forEach(a => { if (!far || this.hav(S, [a.lat, a.lng]) > this.hav(S, [far.lat, far.lng])) far = a; });
+        if (far) this.lastAnchor = far.name;
+        const tag = far ? far.tag : (st.id === 'water' ? 'ocean' : st.id);
+        const j = () => Math.random() * 8 - 4;
+        const [a, b, c] = st.surf.map(v => Math.max(4, v + j()));
+        const tot = a + b + c;
+        return {
+          id: Date.now() + Math.floor(Math.random() * 1000),
+          name: this.makeName(far, r.distMi, tag),
+          styleId: st.id, badge: this.TAGBADGE[tag] || st.badge, tag,
+          coords: r.coords, distMi: r.distMi, turns: r.turns, maxRunMi: r.maxRunMi, steps: r.steps, outMi,
+          climbFt: el.climbFt, peakFt: el.peakFt,
+          anchors: anchors.map(x => ({ name: x.name, lat: x.lat, lng: x.lng })),
+          surf: [Math.round(a / tot * 100), Math.round(b / tot * 100), Math.round(c / tot * 100)],
+          via: anchors.map(x => ({ lat: x.lat, lng: x.lng })),
+        };
+      });
+  };
+  // hand the loop off to a real navigation app: sample the shape so it follows our path
+  mapWaypoints = () => {
+    const r = this.state.route;
+    if (!r) return [];
+    const cs = r.coords, n = 6, out = [];
+    for (let i = 1; i <= n; i++) out.push(cs[Math.round(i * (cs.length - 1) / (n + 1))]);
+    return out;
+  };
+  openGoogle = () => {
+    const s = this.START.lat.toFixed(5) + ',' + this.START.lng.toFixed(5);
+    const w = this.mapWaypoints().map(p => p[0].toFixed(5) + ',' + p[1].toFixed(5)).join('|');
+    window.open('https://www.google.com/maps/dir/?api=1&travelmode=bicycling&origin=' + s + '&destination=' + s + '&waypoints=' + encodeURIComponent(w), '_blank');
+    this.toast('Opening in Google Maps');
+  };
+  // Apple Maps takes exactly one destination on bike — so the loop gets handed over one leg at a time
+  routeLegs = () => {
+    const r = this.state.route;
+    if (!r) return [];
+    const home = { p: [this.START.lat, this.START.lng], name: this.state.gpsStart ? 'Current location' : (this.state.prefs.defStart || 'Start') };
+    let mids = (r.anchors || []).filter(a => a && a.lat != null).map(a => ({ p: [a.lat, a.lng], name: a.name }));
+    if (!mids.length) mids = this.mapWaypoints().slice(0, 3).map((p, i) => ({ p, name: 'Waypoint ' + (i + 1) }));
+    if (mids.length > 4) mids = [0, 1, 2, 3].map(i => mids[Math.round(i * (mids.length - 1) / 3)]);
+    const stops = (this.state.stops || []).filter(s => s && s.lat != null).map(s => ({ p: [s.lat, s.lng], name: s.name }));
+    const pts = [home, ...mids, ...stops, { ...home, name: 'Back home' }];
+    const legs = [];
+    for (let i = 0; i < pts.length - 1; i++) legs.push({ from: pts[i], to: pts[i + 1] });
+    return legs;
+  };
+  sendLeg = (i) => {
+    const legs = this.state.relay;
+    if (!legs || !legs[i]) return;
+    const f = legs[i].from.p, t = legs[i].to.p;
+    window.open('https://maps.apple.com/?saddr=' + f[0].toFixed(5) + ',' + f[1].toFixed(5)
+      + '&daddr=' + t[0].toFixed(5) + ',' + t[1].toFixed(5) + '&dirflg=b', '_blank');
+  };
+  openApple = () => {
+    const legs = this.routeLegs();
+    if (legs.length <= 1) {
+      const s = this.START.lat.toFixed(5) + ',' + this.START.lng.toFixed(5);
+      window.open('https://maps.apple.com/?saddr=' + s + '&daddr=' + s + '&dirflg=b', '_blank');
+      return;
+    }
+    this.setState({ relay: legs, relayIdx: 0 }, () => { this.sendLeg(0); this.toast('Leg 1 of ' + legs.length + ' \u2192 Apple Maps'); });
+  };
+  startGenerating = () => {
+    this.setState({ generating: true, genIdx: 0, stops: [], savedFlag: false, addStop: false, riding: false, followCam: true });
+    clearInterval(this.rideTimer);
+    clearInterval(this.genTimer);
+    this.genTimer = setInterval(() => this.setState(s => ({ genIdx: s.genIdx + 1 })), 900);
+    return Date.now();
+  };
+  generate = (opts = {}) => {
+    if (this.state.generating) return;
+    const styleId = opts.style || this.pickStyle();
+    if (this.deckMode() && !opts.single) return this.generateDeck(opts);
+    const t0 = this.startGenerating();
+    this.buildRoute(styleId, opts).then(route => {
+      setTimeout(() => {
+        clearInterval(this.genTimer);
+        this.setState({ route, screen: 'result', generating: false, deck: [] }, () => { this.drawRoute(); this.drawStops(); this.reframe(); });
+      }, Math.max(0, 1600 - (Date.now() - t0)));
+    });
+  };
+  deckMode = () => (this.props.resultMode ?? 'Swipe deck') === 'Swipe deck';
+  generateDeck = (opts = {}) => {
+    const styleId = opts.style || this.pickStyle();
+    const t0 = this.startGenerating();
+    Promise.all([0, 1, 2].map(i => this.buildRoute(styleId, { reroll: i > 0 }))).then(rs => {
+      setTimeout(() => {
+        clearInterval(this.genTimer);
+        this.setState({ deck: rs, screen: 'deck', generating: false, dx: 0, dy: 0, exit: null });
+      }, Math.max(0, 1600 - (Date.now() - t0)));
+    });
+  };
+  topUpDeck = () => {
+    if (this.topping) return;
+    this.topping = true;
+    this.buildRoute(this.pickStyle(), { reroll: true })
+      .then(r => this.setState(s => ({ deck: [...s.deck, r] })))
+      .finally(() => { this.topping = false; });
+  };
+
+  // ── swipe deck gestures ──────────────────────────────────
+  // gestures run straight on the DOM — no React re-render per frame, so the card tracks the finger
+  CARD_REST = 'translate3d(0px,0px,0) rotate(0deg) scale(1)';
+  CARD_SPRING = 'transform .42s cubic-bezier(.18,.9,.28,1.06), opacity .3s ease-out, box-shadow .2s';
+  stampEls = {};
+  setTopCard = (el) => { this.topCardEl = el; };
+  stashRef = (el) => { this.stampEls.stash = el; };
+  nopeRef = (el) => { this.stampEls.nope = el; };
+  rideRef = (el) => { this.stampEls.ride = el; };
+  paintCard = () => {
+    this.cardRaf = 0;
+    const d = this.drag, el = this.topCardEl;
+    if (!d || !el) return;
+    const dx = d.dx, dy = d.dy;
+    // pull toward the finger, but let vertical sag a little so the card feels weighted
+    el.style.transform = 'translate3d(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px,0) rotate(' + (dx / 24).toFixed(2) + 'deg) scale(1)';
+    const s = this.stampEls;
+    if (s.stash) s.stash.style.opacity = Math.max(0, Math.min(1, dx / 80));
+    if (s.nope) s.nope.style.opacity = Math.max(0, Math.min(1, -dx / 80));
+    if (s.ride) s.ride.style.opacity = Math.max(0, Math.min(1, -dy / 95));
+  };
+  onCardDown = (e) => {
+    if (this.exiting || !this.topCardEl) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    this.drag = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, t: performance.now() };
+    this.topCardEl.style.transition = 'none';
+    this.topCardEl.style.willChange = 'transform';
+    e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  onCardMove = (e) => {
+    const d = this.drag;
+    if (!d) return;
+    d.dx = e.clientX - d.x; d.dy = e.clientY - d.y;
+    if (!this.cardRaf) this.cardRaf = requestAnimationFrame(this.paintCard);
+  };
+  onCardUp = () => {
+    const d = this.drag;
+    if (!d) return;
+    this.drag = null;
+    if (this.cardRaf) { cancelAnimationFrame(this.cardRaf); this.cardRaf = 0; }
+    const dt = Math.max(1, performance.now() - d.t);
+    const vx = d.dx / dt * 1000, vy = d.dy / dt * 1000; // px/s — a quick flick counts even if short
+    if ((d.dy < -95 || vy < -900) && Math.abs(d.dy) > Math.abs(d.dx)) this.commitSwipe('up');
+    else if (d.dx > 82 || vx > 750) this.commitSwipe('right');
+    else if (d.dx < -82 || vx < -750) this.commitSwipe('left');
+    else this.settleCard();
+  };
+  settleCard = () => {
+    const el = this.topCardEl;
+    if (el) { el.style.transition = this.CARD_SPRING; el.style.transform = this.CARD_REST; el.style.opacity = '1'; }
+    const s = this.stampEls;
+    ['stash', 'nope', 'ride'].forEach(k => { if (s[k]) s[k].style.opacity = 0; });
+    setTimeout(() => { if (el && !this.drag) el.style.willChange = 'auto'; }, 440);
+  };
+  resetTopCard = () => {
+    const el = this.topCardEl;
+    if (el) {
+      el.style.transition = 'none';
+      el.style.transform = this.CARD_REST;
+      el.style.opacity = '1';
+      void el.offsetHeight;
+      el.style.transition = this.CARD_SPRING;
+      el.style.willChange = 'auto';
+    }
+    const s = this.stampEls;
+    ['stash', 'nope', 'ride'].forEach(k => { if (s[k]) s[k].style.opacity = 0; });
+  };
+  flingCard = (dir) => {
+    const el = this.topCardEl;
+    if (!el) return;
+    const to = dir === 'up' ? 'translate3d(0,-125%,0) rotate(-3deg) scale(.96)'
+      : dir === 'right' ? 'translate3d(130%,10%,0) rotate(20deg) scale(.96)'
+        : 'translate3d(-130%,10%,0) rotate(-20deg) scale(.96)';
+    el.style.transition = 'transform .34s cubic-bezier(.36,0,.66,-.05), opacity .34s ease-in';
+    el.style.transform = to;
+    el.style.opacity = dir === 'up' ? '1' : '0';
+    const s = this.stampEls, k = dir === 'up' ? 'ride' : dir === 'right' ? 'stash' : 'nope';
+    if (s[k]) s[k].style.opacity = 1;
+  };
+  commitSwipe = (dir) => {
+    if (this.exiting) return;
+    const card = this.state.deck[0];
+    if (!card) return;
+    this.exiting = true;
+    this.drag = null;
+    this.flingCard(dir);
+    if (dir === 'up') {
+      setTimeout(() => {
+        this.setState({ route: card, screen: 'result', savedFlag: !!this.state.saved.find(s => s.id === card.id), stops: [], relay: null, followCam: true, deck: this.state.deck.slice(1) },
+          () => {
+            this.exiting = false;
+            requestAnimationFrame(this.resetTopCard);
+            this.drawRoute(); this.drawStops();
+            setTimeout(() => { this.map && this.map.invalidateSize(); this.reframe(true); }, 480);
+          });
+      }, 300);
+      return;
+    }
+    if (dir === 'right') {
+      const item = { ...card, date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) };
+      const saved = [item, ...this.state.saved];
+      localStorage.setItem('squiggle.saved', JSON.stringify(saved));
+      this.setState({ saved });
+      this.toast('Saved \u201C' + card.name + '\u201D');
+    } else {
+      this.toast('Skipped');
+    }
+    setTimeout(() => {
+      this.setState(s => ({ deck: s.deck.slice(1) }), () => {
+        this.exiting = false;
+        requestAnimationFrame(this.resetTopCard);
+        if (this.state.deck.length < 3) this.topUpDeck();
+      });
+    }, 300);
+  };
+  miniRefs = {}; miniMaps = {}; miniEls = {};
+  // real basemap in the card preview: streets, labels, water — non-interactive so the card still swipes
+  previewFor = (r) => {
+    const id = r.id;
+    if (!this.miniEls[id]) {
+      if (!this.miniRefs[id]) this.miniRefs[id] = (el) => {
+        if (!el) return;
+        const L = window.L;
+        if (!L) { setTimeout(() => this.miniRefs[id] && this.miniRefs[id](el), 200); return; }
+        // React remounts the preview when the card underneath changes, so a map we built earlier can be
+        // stranded on a detached node — rebuild unless the live map is actually sitting in THIS element
+        const cur = this.miniMaps[id];
+        if (cur) {
+          let host = null;
+          try { host = cur.getContainer(); } catch (e) {}
+          if (host === el && document.contains(el)) { setTimeout(() => { try { cur.invalidateSize({ animate: false }); } catch (e) {} }, 60); return; }
+          try { cur.remove(); } catch (e) {}
+          delete this.miniMaps[id];
+        }
+        if (el.__slMap) {
+          try { el.__slMap.remove(); } catch (e) {}
+          el.__slMap = null;
+        }
+        if (el._leaflet_id) { el._leaflet_id = null; el.innerHTML = ''; }
+        try {
+          const m = L.map(el, { zoomControl: false, attributionControl: false, dragging: false, touchZoom: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, tap: false, inertia: false, zoomAnimation: false, fadeAnimation: false });
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png', { subdomains: 'abcd', maxZoom: 19 }).addTo(m);
+          if (this.props.retroTint ?? true) m.getPane('tilePane').style.filter = 'saturate(0.62) sepia(0.2) brightness(1.04) contrast(0.96)';
+          const cs = this.simplify(r.coords, 0.00003);
+          L.polyline(cs, { color: '#1C1815', weight: 7.5, opacity: 0.85 }).addTo(m);
+          L.polyline(cs, { color: '#4C5B3C', weight: 3.8 }).addTo(m);
+          const cut = Math.max(1, Math.floor(cs.length * 0.86));
+          L.polyline(cs.slice(cut), { color: '#B5502F', weight: 3.8 }).addTo(m);
+          L.marker(cs[0], { icon: L.divIcon({ className: '', html: '<div style="width:13px;height:13px;border-radius:50%;background:#4C5B3C;border:3px solid #FBF8F1;box-shadow:0 0 0 2px #1C1815;"></div>', iconSize: [13, 13], iconAnchor: [6.5, 6.5] }) }).addTo(m);
+          const fit = () => { try { m.invalidateSize({ animate: false }); m.fitBounds(L.latLngBounds(cs), { padding: [16, 16], animate: false }); } catch (e) {} };
+          fit();
+          setTimeout(fit, 80);
+          setTimeout(fit, 400);
+          // the card sizes itself after mount — refit whenever the preview box actually changes shape
+          if (window.ResizeObserver) {
+            let t = 0;
+            const ro = new ResizeObserver(() => { clearTimeout(t); t = setTimeout(fit, 50); });
+            ro.observe(el);
+            m.__slRo = ro;
+          }
+          this.miniMaps[id] = m;
+          el.__slMap = m;
+        } catch (e) {}
+      };
+      // keyed per route so React remounts the container instead of recycling a live Leaflet node
+      this.miniEls[id] = React.createElement('div', { key: 'mini-' + id, ref: this.miniRefs[id], style: { position: 'absolute', inset: 0, pointerEvents: 'none' } });
+    }
+    return this.miniEls[id];
+  };
+  pruneMinis = () => {
+    const live = {};
+    this.state.deck.forEach(r => { live[r.id] = 1; });
+    Object.keys(this.miniMaps).forEach(id => {
+      if (live[id]) return;
+      try { this.miniMaps[id].__slRo && this.miniMaps[id].__slRo.disconnect(); } catch (e) {}
+      try { this.miniMaps[id].remove(); } catch (e) {}
+      delete this.miniMaps[id]; delete this.miniRefs[id]; delete this.miniEls[id];
+    });
+  };
+  sketchCache = {};
+  sketchFor = (r, w, h) => {
+    const k = r.id + ':' + w + 'x' + h;
+    if (!this.sketchCache[k]) this.sketchCache[k] = this.sketch(r.coords, w, h);
+    return this.sketchCache[k];
+  };
+  // Douglas-Peucker: drop the GPS jitter so the card reads as one clean line
+  simplify = (pts, tol) => {
+    if (pts.length < 5) return pts;
+    const segd = (p, a, b) => {
+      let x = a[0], y = a[1];
+      const dx = b[0] - x, dy = b[1] - y;
+      if (dx || dy) { const t = ((p[0] - x) * dx + (p[1] - y) * dy) / (dx * dx + dy * dy); if (t > 1) { x = b[0]; y = b[1]; } else if (t > 0) { x += dx * t; y += dy * t; } }
+      return (p[0] - x) * (p[0] - x) + (p[1] - y) * (p[1] - y);
+    };
+    const t2 = tol * tol, keep = new Array(pts.length).fill(false), stack = [[0, pts.length - 1]];
+    keep[0] = keep[pts.length - 1] = true;
+    while (stack.length) {
+      const seg = stack.pop(), i = seg[0], j = seg[1];
+      let max = 0, idx = -1;
+      for (let k = i + 1; k < j; k++) { const d = segd(pts[k], pts[i], pts[j]); if (d > max) { max = d; idx = k; } }
+      if (idx > 0 && max > t2) { keep[idx] = true; stack.push([i, idx], [idx, j]); }
+    }
+    return pts.filter((p, i) => keep[i]);
+  };
+  // one clean line, fit to the card — no tiles, no clutter
+  sketch = (coords, w, h) => {
+    const pts = this.simplify(coords, 0.00009);
+    const lats = pts.map(c => c[0]), lngs = pts.map(c => c[1]);
+    const la0 = Math.min(...lats), la1 = Math.max(...lats), lo0 = Math.min(...lngs), lo1 = Math.max(...lngs);
+    const kx = Math.cos((la0 + la1) / 2 * Math.PI / 180);
+    const bw = Math.max(1e-7, (lo1 - lo0) * kx), bh = Math.max(1e-7, la1 - la0);
+    const pad = 24;
+    const s = Math.min((w - pad * 2) / bw, (h - pad * 2) / bh);
+    const ox = (w - bw * s) / 2, oy = (h - bh * s) / 2;
+    const P = (c) => [ox + (c[1] - lo0) * kx * s, oy + (la1 - c[0]) * s];
+    const d = pts.map((c, i) => { const p = P(c); return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+    const a0 = P(pts[0]);
+    const mi = Math.floor(pts.length * 0.5);
+    const m1 = P(pts[mi]), m0 = P(pts[Math.max(0, mi - 2)]);
+    const ang = Math.atan2(m1[1] - m0[1], m1[0] - m0[0]) * 180 / Math.PI;
+    // one teal line the whole way, orange for the last stretch home — reads clean at card size
+    const cut = Math.max(1, Math.floor(pts.length * 0.86));
+    const dTail = pts.slice(cut).map((c, i) => { const p = P(c); return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+    return React.createElement('svg', { viewBox: '0 0 ' + w + ' ' + h, preserveAspectRatio: 'xMidYMid meet', style: { position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' } },
+      React.createElement('path', { d, fill: 'none', stroke: '#DCD1BB', strokeWidth: 9, strokeLinejoin: 'round', strokeLinecap: 'round' }),
+      React.createElement('path', { d, fill: 'none', stroke: '#4C5B3C', strokeWidth: 3.4, strokeLinejoin: 'round', strokeLinecap: 'round' }),
+      React.createElement('path', { d: dTail, fill: 'none', stroke: '#B5502F', strokeWidth: 3.4, strokeLinejoin: 'round', strokeLinecap: 'round' }),
+      React.createElement('g', { transform: 'translate(' + m1[0].toFixed(1) + ',' + m1[1].toFixed(1) + ') rotate(' + ang.toFixed(1) + ')' },
+        React.createElement('path', { d: 'M-3.5 -5 L5.5 0 L-3.5 5 Z', fill: '#1C1815' })),
+      React.createElement('circle', { cx: a0[0], cy: a0[1], r: 5.5, fill: '#FBF8F1', stroke: '#1C1815', strokeWidth: 2.5 }),
+      React.createElement('circle', { cx: a0[0], cy: a0[1], r: 2.2, fill: '#4C5B3C' }),
+    );
+  };
+
+
+  mix = (a, b, t) => {
+    const p = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+    const A = p(a), B = p(b);
+    return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join('');
+  };
+  drawRoute = (retry) => {
+    if (!this.map || !this.state.route) return;
+    try {
+    const L = this.L || window.L;
+    this.map.invalidateSize({ animate: false });
+    this.routeLayer.clearLayers();
+    const cs = this.state.route.coords;
+    const dashed = this.props.routeLine === 'Dashed';
+    L.polyline(cs, { color: '#1C1815', weight: 9, opacity: 0.85, renderer: this.rend }).addTo(this.routeLayer);
+    // gradient: pale start → deep finish, so direction of travel reads at a glance
+    // hard-stepped bands from teal (start) to orange (finish) — complementary, no mush
+    const BANDS = 6;
+    const bandOf = (t) => Math.min(BANDS - 1, Math.floor(t * BANDS));
+    const bandColor = (b) => this.mix('#4C5B3C', '#B5502F', b / (BANDS - 1));
+    let cursor = 0;
+    for (let b = 0; b < BANDS; b++) {
+      const end = b === BANDS - 1 ? cs.length - 1 : Math.max(cursor + 1, Math.round((b + 1) / BANDS * (cs.length - 1)));
+      const seg = cs.slice(cursor, end + 1);
+      if (seg.length > 1) L.polyline(seg, { color: bandColor(b), weight: 5.5, dashArray: dashed ? '2 8' : null, lineCap: 'butt', lineJoin: 'round', renderer: this.rend }).addTo(this.routeLayer);
+      cursor = end;
+    }
+    this.poly = L.polyline(cs, { opacity: 0, weight: 1, renderer: this.rend }).addTo(this.routeLayer);
+    const fin = cs[cs.length - 1];
+    L.marker(fin, { icon: L.divIcon({ className: '', html: '<div style="width:14px;height:14px;border-radius:3px;background:#B5502F;color:#FBF8F1;border:1px solid rgba(28,24,21,.13);box-shadow:0 2px 4px rgba(0,0,0,.35);"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }) }).addTo(this.routeLayer);
+    if (this.state.screen === 'result') setTimeout(() => this.reframe(), 80);
+    } catch (e) {
+      // Leaflet can be mid-resize on a phone — never let it take the UI down
+      if ((retry || 0) < 4) setTimeout(() => this.drawRoute((retry || 0) + 1), 160);
+    }
+  };
+  drawStops = () => {
+    if (!this.map) return;
+    try {
+    const L = this.L || window.L;
+    this.stopLayer.clearLayers();
+    this.state.stops.forEach((s, i) => {
+      L.marker([s.lat, s.lng], { icon: L.divIcon({ className: '', html: '<div style="width:24px;height:24px;border-radius:8px;background:#4C5B3C;border:1px solid rgba(28,24,21,.13);color:#F3EFE6;font:900 12px Archivo,sans-serif;display:flex;align-items:center;justify-content:center;box-shadow:2px 2px 0 rgba(28,24,21,.6);">' + (i + 1) + '</div>', iconSize: [24, 24], iconAnchor: [12, 12] }) }).addTo(this.stopLayer);
+    });
+    } catch (e) {}
+  };
+
+  recomputeWithStops = (stops) => {
+    const ordered = [];
+    let cur = [this.START.lat, this.START.lng];
+    const pool = [...stops];
+    while (pool.length) {
+      pool.sort((a, b) => this.hav(cur, [a.lat, a.lng]) - this.hav(cur, [b.lat, b.lng]));
+      const n = pool.shift(); ordered.push(n); cur = [n.lat, n.lng];
+    }
+    this.setState({ stops: ordered });
+    const wps = [this.START, ...ordered, ...(this.state.route.via || []), this.START];
+    this.fetchRoute(wps).then(r => {
+      this.setState(s => ({ route: { ...s.route, coords: r.coords, distMi: r.distMi }, savedFlag: false }), () => { this.drawRoute(); this.drawStops(); this.reframe(); });
+    });
+  };
+  addStopBiz = (b) => {
+    if (this.state.stops.find(s => s.name === b.name)) { this.toast('Already on the route'); return; }
+    this.recomputeWithStops([...this.state.stops, b]);
+    this.toast('Added ' + b.name);
+  };
+  removeStop = (name) => { this.recomputeWithStops(this.state.stops.filter(s => s.name !== name)); };
+
+  riderIcon = (acc) => (this.L || window.L).divIcon({ className: '', html: '<div style="position:relative;width:22px;height:22px;"><div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:' + Math.round(acc) + 'px;height:' + Math.round(acc) + 'px;border-radius:50%;background:rgba(14,143,132,.18);border:1px solid rgba(14,143,132,.5);"></div><div style="position:absolute;inset:0;border-radius:50%;background:#4C5B3C;border:3px solid #F3EFE6;box-shadow:0 0 0 2.5px #1C1815,0 3px 8px rgba(0,0,0,.4);"></div></div>', iconSize: [22, 22], iconAnchor: [11, 11] });
+
+  placeRider = (ll, accPx) => {
+    const L = this.L || window.L;
+    if (!this.rider) this.rider = L.marker(ll, { icon: this.riderIcon(accPx || 22), zIndexOffset: 500 }).addTo(this.map);
+    else { this.rider.setLatLng(ll); this.rider.setIcon(this.riderIcon(accPx || 22)); }
+  };
+  // nearest point on the route + how far along it we are
+  progressAt = (ll) => {
+    const cs = this.state.route.coords;
+    let best = 1e9, bi = 0;
+    for (let i = 0; i < cs.length; i++) { const d = this.hav(cs[i], ll); if (d < best) { best = d; bi = i; } }
+    let along = 0; for (let i = 1; i <= bi; i++) along += this.hav(cs[i - 1], cs[i]);
+    const total = this.lineDist(cs);
+    return { offMi: best, along, remaining: Math.max(0, total - along), frac: total ? along / total : 0 };
+  };
+
+  startRide = () => {
+    if (!this.state.route) return;
+    const cs = this.state.route.coords;
+    this.rideStart = Date.now();
+    this.setState({ riding: true, gps: 'locating', rideStatus: 'FINDING YOU…', followCam: true });
+    this.placeRider(cs[0], 22);
+    this.camMove(() => this.map.setView(cs[0], 16));
+    if (!navigator.geolocation) { this.toast('No GPS on this device — running a demo'); this.simulateRide(); return; }
+    this.watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const ll = [pos.coords.latitude, pos.coords.longitude];
+        const acc = pos.coords.accuracy || 20;
+        // accuracy circle sized in screen px at current zoom
+        const px = Math.max(22, Math.min(160, acc / (40075016.686 * Math.cos(ll[0] * Math.PI / 180) / Math.pow(2, this.map.getZoom() + 8)) * 2));
+        this.placeRider(ll, px);
+        if (this.state.followCam) this.camMove(() => this.map.panTo(ll, { animate: true }));
+        const p = this.progressAt(ll);
+        const speed = pos.coords.speed;
+        const mph = speed != null && speed >= 0 ? ' · ' + (speed * 2.2369).toFixed(0) + ' mph' : '';
+        let msg;
+        if (p.offMi > 0.12) msg = 'OFF ROUTE — ' + this.fmtD(p.offMi) + ' AWAY';
+        else if (p.frac > 0.97) msg = 'YOU MADE IT!';
+        else msg = this.fmtD(p.remaining) + ' TO GO' + mph;
+        this.setState({ gps: 'live', rideStatus: msg });
+        if (p.frac > 0.97 && p.offMi < 0.12 && Date.now() - this.rideStart > 20000) this.endRide(true);
+      },
+      (err) => {
+        const blocked = /permissions policy/i.test(err.message || '');
+        const why = blocked ? 'GPS blocked in this preview frame' : err.code === 1 ? 'Location permission denied' : 'Couldn\u2019t get a GPS fix';
+        this.toast(why + ' — running a demo');
+        this.simulateRide();
+      },
+      { enableHighAccuracy: true, maximumAge: 2000, timeout: 12000 }
+    );
+  };
+  simulateRide = () => {
+    if (this.watchId != null) { navigator.geolocation.clearWatch(this.watchId); this.watchId = null; }
+    const cs = this.state.route.coords;
+    this.setState({ gps: 'sim' });
+    let i = 0, tick = 0;
+    const step = Math.max(1, Math.round(cs.length / 400));
+    clearInterval(this.rideTimer);
+    this.rideTimer = setInterval(() => {
+      i += step; tick++;
+      if (i >= cs.length) { this.endRide(true); return; }
+      this.placeRider(cs[i], 22);
+      if (tick % 14 === 0 && this.state.followCam) this.camMove(() => this.map.panTo(cs[i], { animate: true }));
+      const rem = this.state.route.distMi * (1 - i / cs.length);
+      this.setState({ rideStatus: this.fmtD(rem) + ' TO GO (DEMO)' });
+    }, 50);
+  };
+  endRide = (finished) => {
+    clearInterval(this.rideTimer);
+    if (this.watchId != null) { navigator.geolocation.clearWatch(this.watchId); this.watchId = null; }
+    if (this.rider && this.map) this.map.removeLayer(this.rider);
+    this.rider = null;
+    this.setState({ riding: false, gps: null }, () => { this.reframe(); if (finished === true) this.toast('Ride finished'); });
+  };
+
+  saveRoute = () => {
+    if (!this.state.route) return;
+    if (this.state.savedFlag) { this.toast('Already saved'); return; }
+    const r = this.state.route;
+    const item = { ...r, date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) };
+    const saved = [item, ...this.state.saved];
+    this.setState({ saved, savedFlag: true });
+    localStorage.setItem('squiggle.saved', JSON.stringify(saved));
+    this.toast('Saved');
+  };
+  persistSaved = (saved) => { this.setState({ saved }); localStorage.setItem('squiggle.saved', JSON.stringify(saved)); };
+  persistPrefs = (patch) => {
+    const prefs = { ...this.state.prefs, ...patch };
+    this.setState({ prefs });
+    localStorage.setItem('squiggle.prefs', JSON.stringify(prefs));
+  };
+  toast = (m) => {
+    clearTimeout(this.toastTimer);
+    this.setState({ toast: m });
+    this.toastTimer = setTimeout(() => this.setState({ toast: null }), 1900);
+  };
+  fmtD = (mi) => this.state.prefs.units === 'km' ? (mi * 1.609).toFixed(1) + ' km' : mi.toFixed(1) + ' mi';
+
+  renderVals() {
+    const S = this.state, P = this.props;
+    window.__squiggle = this;
+    const isHome = S.screen === 'home';
+    const ease = this.sheetDragging ? 'none' : this.SHEET_EASE;
+    const geomBase = { position: 'absolute', zIndex: 1, transition: ease, overflow: 'hidden' };
+    const sp = this.sheetPos();
+    const spPct = (sp * 100).toFixed(2) + '%';
+    const bigMap = sp > (this.SNAP_LO + this.SNAP_HI) / 2;
+    let geom;
+    geom = { ...geomBase, left: 0, right: 0, top: 0, bottom: 0 };
+
+    const T = this.theme();
+    const stSel = this.STYLES.find(x => x.id === S.style);
+    const st = stSel || { id: null, name: 'Any vibe', badge: 'ANY', dot: T.mute, range: [3, 17], surf: [40, 30, 30] };
+    const styleCards = this.STYLES.map(s => {
+      const sel = s.id === S.style;
+      return {
+        name: s.name, range: s.range[0] + '–' + s.range[1] + ' mi',
+        rowStyle: { display: 'flex', alignItems: 'center', gap: 13, width: '100%', boxSizing: 'border-box', padding: '15px 16px', borderRadius: 10, cursor: 'pointer', textAlign: 'left', fontFamily: "'Archivo',sans-serif", background: sel ? T.rowSel : T.rowBg, border: '1px solid ' + (sel ? T.accentEdge : T.hair), boxShadow: sel ? T.rowLift : 'none', transition: 'background .16s ease, border-color .16s ease, box-shadow .16s ease, transform .16s ease', transform: sel ? 'translateY(-1px)' : 'none' },
+        dotStyle: { width: 12, height: 12, borderRadius: '50%', background: s.dot, display: 'block', flex: '0 0 auto', opacity: sel ? 1 : .5, boxShadow: sel ? '0 0 0 4px ' + T.ring : 'none', transition: 'box-shadow .16s ease, opacity .16s ease' },
+        nameStyle: { fontFamily: "'Archivo',sans-serif", fontWeight: 700, fontSize: 17, letterSpacing: '-.1px', color: T.ink },
+        rangeStyle: { marginLeft: 'auto', fontSize: 14, fontWeight: 600, color: T.mute, letterSpacing: '.1px', whiteSpace: 'nowrap' },
+        select: () => this.setState(prev => ({ style: prev.style === s.id ? null : s.id })),
+      };
+    });
+    const chipDefs = [['short', 'SHORT'], ['med', 'MID'], ['long', 'LONG'], ['custom', 'SET']];
+    const chips = chipDefs.map(([id, label], i) => {
+      const sel = S.chip === id;
+      const v = id === 'custom' ? Math.max(1, Math.min(40, +S.customMi || 10)) : st.range[0] + (st.range[1] - st.range[0]) * [0.15, 0.5, 0.85][i];
+      const mins = Math.round(v / S.prefs.speed * 60);
+      return {
+        label, sub: (S.prefs.units === 'km' ? Math.round(v * 1.609) + 'k' : Math.round(v) + 'mi') + ' · ' + mins + 'm',
+        style: { flex: 1, fontFamily: "'Archivo',sans-serif", fontWeight: 700, fontSize: 12.5, letterSpacing: '.4px', padding: '11px 2px', borderRadius: 9, cursor: 'pointer', background: sel ? T.chipOn : T.rowBg, color: sel ? T.chipOnInk : T.ink, border: '1px solid ' + (sel ? T.chipOnEdge : T.hair), boxShadow: sel ? T.rowLift : 'none', transition: 'background .16s ease, color .16s ease, border-color .16s ease' },
+        subStyle: { display: 'block', marginTop: 3, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 500, fontSize: 11, letterSpacing: '-.2px', opacity: .74 },
+        select: () => this.setState({ chip: id }),
+      };
+    });
+
+    const r = S.route;
+    const q = S.searchQ.trim().toLowerCase();
+    const near = (b) => {
+      if (!r) return 0.3;
+      let m = 99; for (let i = 0; i < r.coords.length; i += 6) m = Math.min(m, this.hav(r.coords[i], [b.lat, b.lng]));
+      return m;
+    };
+    const KINDS = [['all', 'ALL'], ['food', 'FOOD & DRINK'], ['sight', 'SIGHTS'], ['history', 'HISTORY'], ['park', 'PARKS'], ['tourist', 'MUST-SEE']];
+    const KINDINK = { food: '#B5502F', sight: '#3E6E80', history: '#6B4A5C', park: '#4C5B3C', tourist: '#8A6A2E' };
+    const catChips = KINDS.map(([id, label]) => {
+      const on = (S.stopCat || 'all') === id;
+      return {
+        label,
+        style: { flex: '0 0 auto', height: 38, padding: '0 14px', borderRadius: 99, cursor: 'pointer', fontFamily: "'Archivo',sans-serif", fontWeight: 700, fontSize: 11.5, letterSpacing: '1.1px', whiteSpace: 'nowrap', background: on ? '#1C1815' : 'rgba(255,255,255,.7)', color: on ? '#F7F4EE' : '#1C1815', border: '1px solid ' + (on ? 'rgba(28,24,21,.9)' : 'rgba(28,24,21,.13)') },
+        select: () => this.setState({ stopCat: id }),
+      };
+    });
+    const kindSel = S.stopCat || 'all';
+    const results = this.BIZ
+      .filter(b => kindSel === 'all' || b.kind === kindSel)
+      .filter(b => !q || b.name.toLowerCase().includes(q) || b.cat.toLowerCase().includes(q) || (b.kind || '').includes(q))
+      .map(b => ({ b, d: near(b) }))
+      .sort((x, y) => x.d - y.d)
+      .slice(0, 14)
+      .map(({ b, d }) => ({
+        name: b.name,
+        meta: b.cat + ' · +' + d.toFixed(1) + ' mi off-route',
+        kind: (KINDS.find(k => k[0] === b.kind) || ['', ''])[1],
+        kindStyle: { flex: '0 0 auto', fontFamily: "'Archivo',sans-serif", fontWeight: 700, fontSize: 9.5, letterSpacing: '1px', color: KINDINK[b.kind] || '#6E655A', background: 'rgba(28,24,21,.05)', border: '1px solid rgba(28,24,21,.10)', borderRadius: 99, padding: '3px 8px' },
+        add: () => this.addStopBiz(b),
+      }));
+
+    const segStyle = (pct, col) => ({ width: pct + '%', background: col, height: '100%' });
+    const surf = r ? r.surf : [33, 33, 34];
+
+    const segBtn = (sel) => ({ flex: 1, fontFamily: "'Archivo',sans-serif", fontWeight: 800, fontSize: 11.5, letterSpacing: '.5px', padding: '10px 4px', borderRadius: 999, border: '1px solid rgba(28,24,21,.13)', cursor: 'pointer', background: sel ? '#B5502F' : '#F3EFE6', color: '#1C1815', boxShadow: sel ? '0 4px 12px rgba(28,24,21,.10)' : 'none' });
+
+    return {
+      mapRef: this.mapEl, mapWrapStyle: geom, sheetRef: this.sheetRef, gpsRef: this.gpsRef,
+      showHome: isHome && !S.generating,
+      sheetStyle: { position: 'absolute', left: 0, right: 0, top: spPct, bottom: 0, backgroundImage: this.GRAIN + ', ' + T.sheetBg, backgroundSize: '170px 170px, auto', backgroundBlendMode: 'soft-light, normal', backdropFilter: T.blur, WebkitBackdropFilter: T.blur, borderTop: T.edge, borderRadius: '28px 28px 0 0', zIndex: 3, boxSizing: 'border-box', padding: '10px 20px calc(env(safe-area-inset-bottom, 0px) + 40px)', display: 'flex', flexDirection: 'column', gap: 11, color: T.ink, boxShadow: T.shadow, touchAction: 'none', transition: S.sheetDrag ? 'none' : 'top .38s cubic-bezier(.65,0,.35,1)' },
+      scrimStyle: { position: 'absolute', left: 0, right: 0, top: -112, height: 112, zIndex: -1, pointerEvents: 'none', background: T.scrim },
+      handleStyle: { width: 46, height: 5, borderRadius: 99, background: T.handle },
+      attribStyle: { display: 'none' },
+      rollVibe: () => this.setState(prev => {
+        const pool = this.STYLES.filter(s => s.id !== prev.style);
+        return { style: pool[Math.floor(Math.random() * pool.length)].id };
+      }),
+      rollStyle: { display: 'flex', alignItems: 'center', height: 44, padding: '0 15px', borderRadius: 99, background: 'rgba(255,255,255,.7)', border: '1px solid ' + T.hair, color: T.ink, fontFamily: "'Archivo',sans-serif", fontWeight: 700, fontSize: 12.5, letterSpacing: '1.1px', cursor: 'pointer', boxShadow: '0 2px 6px rgba(28,24,21,.07)', flex: '0 0 auto' },
+      eyebrowStyle: { fontSize: 13.5, fontWeight: 700, letterSpacing: '1.8px', color: T.mute, fontFamily: "'Archivo',sans-serif" },
+      eyebrow2Style: { fontSize: 13.5, fontWeight: 700, letterSpacing: '1.8px', color: T.mute, marginTop: 6, fontFamily: "'Archivo',sans-serif" },
+      linkStyle: { fontSize: 16.5, fontWeight: 700, color: T.link, borderBottom: '1.5px solid ' + T.linkEdge, paddingBottom: 1, fontFamily: "'Archivo',sans-serif" },
+      listRef: this.listRef,
+      ctaStyle: { flex: '0 0 auto', height: 64, background: T.accentGrad, color: T.accentInk, border: '1px solid ' + T.accentEdge, borderRadius: 10, boxShadow: T.ctaShadow, fontFamily: "'Archivo',sans-serif", fontWeight: 800, fontSize: 20, letterSpacing: '.6px', cursor: 'pointer', transition: 'transform .12s ease, box-shadow .12s ease' },
+      ctaLabel: 'DRAW ME A LOOP',
+      customRowStyle: { display: 'flex', alignItems: 'center', gap: 12, background: T.rowBg, border: '1px solid ' + T.hair, borderRadius: 9, padding: '10px 12px' },
+      customInputStyle: { width: 70, border: '1px solid ' + T.hair, borderRadius: 11, padding: 10, fontFamily: "'Archivo',sans-serif", fontWeight: 700, fontSize: 17, background: T.field, color: T.ink, textAlign: 'center' },
+      customUnitStyle: { fontFamily: "'Archivo',sans-serif", fontWeight: 700, fontSize: 14, letterSpacing: '1px', color: T.ink },
+      customEtaStyle: { marginLeft: 'auto', fontSize: 12.5, fontWeight: 600, color: T.mute },
+      gpsBtnStyle: { position: 'absolute', right: 18, top: 'calc(' + spPct + ' - 70px)', zIndex: 4, width: 52, height: 52, borderRadius: '50%', background: S.gpsStart ? T.accent : T.glass, backdropFilter: 'saturate(150%) blur(14px)', WebkitBackdropFilter: 'saturate(150%) blur(14px)', color: S.gpsStart ? T.accentInk : T.ink, border: '1px solid ' + (S.gpsStart ? T.accentEdge : T.hair), boxShadow: '0 10px 24px rgba(28,24,21,.20), inset 0 1px 0 rgba(255,255,255,.5)', fontFamily: "'Archivo',sans-serif", fontSize: 20, cursor: 'pointer', transition: S.sheetDrag ? 'none' : 'top .38s cubic-bezier(.65,0,.35,1)' },
+      locateMe: () => this.locate(true),
+      showControls: !bigMap,
+      showCompact: bigMap,
+      compactVibe: st.name,
+      compactRowStyle: { flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 11, fontSize: 14, fontWeight: 600, color: T.mute, padding: '2px 0 6px', fontFamily: "'Archivo',sans-serif" },
+      compactNameStyle: { color: T.ink, fontFamily: "'Archivo',sans-serif", fontWeight: 700, fontSize: 17, letterSpacing: '-.1px' },
+      compactDot: { width: 12, height: 12, borderRadius: '50%', background: st.dot, display: 'block', boxShadow: '0 0 0 4px ' + T.ring },
+      compactFar: (S.chip === 'custom' ? Math.max(1, Math.min(40, +S.customMi || 10)) : Math.round(st.range[0] + (st.range[1] - st.range[0]) * { short: 0.15, med: 0.5, long: 0.85 }[S.chip])) + (S.prefs.units === 'km' ? ' km' : ' mi') + ' · ' + { short: 'short', med: 'mid', long: 'long', custom: 'set' }[S.chip],
+      onSheetDown: this.onSheetDown, onSheetMove: this.onSheetMove, onSheetUp: this.onSheetUp, onSheetClick: this.onSheetClick,
+      showResult: S.screen === 'result' && !S.riding && !S.generating,
+      showRiding: S.riding,
+      showAddStop: S.addStop,
+      showSaved: S.screen === 'saved',
+      showSettings: S.screen === 'settings',
+      showGenerating: S.generating,
+      showToast: !!S.toast, toastMsg: S.toast,
+      genMsg: this.MSGS[S.genIdx % this.MSGS.length],
+      startLabel: !S.useGps ? S.prefs.defStart
+        : S.gpsStart ? 'Current Location'
+        : S.gpsErr === 'https' ? 'GPS needs https · ' + S.prefs.defStart
+        : S.gpsErr ? 'Location off · tap to retry'
+        : 'Finding you…',
+      toggleStart: () => {
+        if (S.useGps && !S.gpsStart) { this.locate(true); return; }
+        this.setState(s => ({ useGps: !s.useGps }));
+        this.toast(S.useGps ? 'Starting from your fallback spot' : 'Back to live GPS');
+      },
+      openSaved: () => this.setState({ screen: 'saved' }),
+      openSettings: () => this.setState({ screen: 'settings' }),
+      goHome: () => this.setState({ screen: 'home', addStop: false }),
+      deckCards: (() => {
+        const D = S.deck.slice(0, 3);
+        return D.map((r, i) => {
+          const top = i === 0;
+          const rot = top ? 0 : (i === 1 ? 2.5 : -3);
+          const lift = top ? 0 : i * 10;
+          const st2 = this.STYLES.find(x => x.id === r.styleId) || this.STYLES[0];
+          return {
+            key: r.id,
+            name: r.name, badge: r.badge, dist: this.fmtD(r.distMi),
+            mins: Math.round(r.distMi / S.prefs.speed * 60) + ' min',
+            preview: this.previewFor(r),
+            stats: [
+              { k: 't', label: 'TURNS', value: r.turns != null ? String(r.turns) : '—', note: r.turns != null ? (r.turns / Math.max(1, r.distMi)).toFixed(1) + ' per mile' : '' },
+              { k: 's', label: 'STRAIGHTAWAY', value: r.maxRunMi != null ? this.fmtD(r.maxRunMi) : '—', note: 'longest no-turn run' },
+              { k: 'c', label: 'CLIMB', value: r.climbFt != null ? r.climbFt + ' ft' : '—', note: r.peakFt != null ? 'peak ' + r.peakFt + ' ft' : '' },
+              { k: 'o', label: 'FARTHEST OUT', value: r.outMi != null ? this.fmtD(r.outMi) : '—', note: 'from your start' },
+            ],
+            wxLine: S.weather ? S.weather.temp + '\u00B0 ' + S.weather.label.toLowerCase() + ' · ' + S.weather.wind + ' mph ' + (S.weather.dir || '') + (S.weather.sunset ? ' · sunset ' + S.weather.sunset : '') : 'weather offline',
+            badgeStyle: { fontFamily: "'Archivo',sans-serif", fontWeight: 800, fontSize: 11, letterSpacing: '1px', background: this.TAGDOT[r.tag] || st2.dot, color: '#F3EFE6', border: '1px solid rgba(28,24,21,.13)', borderRadius: 999, padding: '4px 9px', whiteSpace: 'nowrap' },
+            barLane: { width: r.surf[0] + '%', background: '#B5502F' },
+            barPath: { width: r.surf[1] + '%', background: '#4C5B3C' },
+            barStreet: { width: r.surf[2] + '%', background: 'rgba(28,24,21,.16)' },
+            surfText: r.surf[0] + '% lane · ' + r.surf[1] + '% path · ' + r.surf[2] + '% quiet st',
+            style: {
+              position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 10 - i,
+              display: 'flex', flexDirection: 'column',
+              background: '#FBF8F1', border: '1px solid rgba(28,24,21,.13)', borderRadius: 12,
+              boxShadow: top ? '6px 6px 0 #1C1815' : '4px 4px 0 rgba(28,24,21,.45)',
+              padding: '13px 15px 15px', boxSizing: 'border-box', overflow: 'hidden',
+              transform: top ? this.CARD_REST : 'translate3d(0px,' + lift + 'px,0) rotate(' + rot + 'deg) scale(' + (1 - i * 0.035) + ')',
+              transition: this.CARD_SPRING,
+              backfaceVisibility: 'hidden',
+              touchAction: 'none', cursor: top ? 'grab' : 'default', userSelect: 'none',
+            },
+            ref: top ? this.setTopCard : null,
+            stashRef: top ? this.stashRef : null,
+            nopeRef: top ? this.nopeRef : null,
+            rideRef: top ? this.rideRef : null,
+            onDown: top ? this.onCardDown : null,
+            onMove: top ? this.onCardMove : null,
+            onUp: top ? this.onCardUp : null,
+            stashStamp: { position: 'absolute', top: 18, left: 16, fontFamily: "'Archivo',sans-serif", fontWeight: 800, fontSize: 20, letterSpacing: '1px', color: '#4C5B3C', border: '4px solid #4C5B3C', borderRadius: 10, padding: '4px 10px', transform: 'rotate(-14deg)', opacity: 0, transition: 'opacity .12s linear', pointerEvents: 'none' },
+            nopeStamp: { position: 'absolute', top: 18, right: 16, fontFamily: "'Archivo',sans-serif", fontWeight: 800, fontSize: 20, letterSpacing: '1px', color: '#B5502F', border: '4px solid #B5502F', borderRadius: 10, padding: '4px 10px', transform: 'rotate(14deg)', opacity: 0, transition: 'opacity .12s linear', pointerEvents: 'none' },
+            rideStamp: { position: 'absolute', bottom: 18, left: '50%', marginLeft: -52, fontFamily: "'Archivo',sans-serif", fontWeight: 800, fontSize: 18, letterSpacing: '1px', color: '#B5502F', border: '4px solid #B5502F', borderRadius: 10, padding: '4px 10px', opacity: 0, transition: 'opacity .12s linear', pointerEvents: 'none' },
+          };
+        });
+      })(),
+      showDeck: S.screen === 'deck' && !S.generating,
+      deckEmpty: S.screen === 'deck' && !S.generating && S.deck.length === 0,
+      hasDeck: S.deck.length > 0,
+      backToDeck: () => this.setState({ screen: 'deck', addStop: false }),
+      deckCount: S.deck.length ? S.deck.length + ' fresh' : 'cooking…',
+      swipeLeft: () => this.commitSwipe('left'),
+      swipeRight: () => this.commitSwipe('right'),
+      swipeUp: () => this.commitSwipe('up'),
+      moreCards: () => this.generateDeck(),
+      styleCards, chips, catChips,
+      quietBtn: { flex: 1, minHeight: 46, fontFamily: "'Archivo',sans-serif", fontWeight: 800, fontSize: 13.5, letterSpacing: '.6px', color: '#1C1815', background: 'rgba(252,250,246,.92)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(28,24,21,.13)', borderRadius: 9, cursor: 'pointer', boxShadow: '0 6px 16px rgba(28,24,21,.10)' },
+      dangerBtn: { flex: 1, minHeight: 46, fontFamily: "'Archivo',sans-serif", fontWeight: 800, fontSize: 13.5, letterSpacing: '.6px', color: '#B5502F', background: 'rgba(252,250,246,.92)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(166,79,46,.3)', borderRadius: 9, cursor: 'pointer', boxShadow: '0 6px 16px rgba(28,24,21,.10)' },
+      primaryBtn: { flex: 1, height: 58, fontFamily: "'Archivo',sans-serif", fontWeight: 800, fontSize: 18, letterSpacing: '.8px', color: '#F4F6EF', background: 'linear-gradient(180deg,#57683F 0%,#3F4E2E 100%)', border: '1px solid rgba(38,48,26,.6)', borderRadius: 10, cursor: 'pointer', boxShadow: '0 12px 26px rgba(52,64,38,.26), inset 0 1px 0 rgba(255,255,255,.20)' },
+      googleBtn: { flex: '0 0 auto', width: 104, height: 58, fontFamily: "'Archivo',sans-serif", fontWeight: 800, fontSize: 13.5, letterSpacing: '.6px', color: '#1C1815', background: 'rgba(252,250,246,.92)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(28,24,21,.13)', borderRadius: 10, cursor: 'pointer', boxShadow: '0 6px 16px rgba(28,24,21,.10)' },
+      showCustom: S.chip === 'custom',
+      customMi: S.customMi,
+      onCustomMi: (e) => this.setState({ customMi: e.target.value.replace(/[^0-9.]/g, '') }),
+      customUnit: S.prefs.units === 'km' ? 'KM' : 'MI',
+      customEta: 'about ' + Math.round(Math.max(1, Math.min(40, +S.customMi || 10)) / S.prefs.speed * 60) + ' min at ' + (S.prefs.units === 'km' ? Math.round(S.prefs.speed * 1.609) + ' km/h' : S.prefs.speed + ' mph'),
+      generate: () => this.generate(),
+      reroll: () => this.generate({ reroll: true }),
+      nope: () => { this.toast('New route'); setTimeout(() => this.generate({ reroll: true }), 700); },
+      saveRoute: this.saveRoute, saveLabel: S.savedFlag ? 'SAVED!' : 'SAVE',
+      openAddStop: () => this.setState({ addStop: true }),
+      closeAddStop: () => this.setState({ addStop: false }),
+      startRide: this.startRide, endRide: () => this.endRide(false),
+      rideStatus: S.rideStatus || 'ROLLING OUT…',
+      gpsLabel: S.gps === 'live' ? '● LIVE GPS' : S.gps === 'sim' ? '○ DEMO MODE' : '◌ LOCATING…',
+      gpsStyle: { fontFamily: "'Archivo',sans-serif", fontWeight: 800, fontSize: 11, letterSpacing: '1px', border: '1px solid rgba(28,24,21,.13)', borderRadius: 999, padding: '5px 10px', background: S.gps === 'live' ? '#4C5B3C' : '#F3EFE6', color: S.gps === 'live' ? '#F3EFE6' : '#6E655A' },
+      recenter: () => { this.setState({ followCam: true }); if (this.rider && this.map) this.camMove(() => this.map.setView(this.rider.getLatLng(), 16, { animate: true })); },
+      camLocked: S.followCam,
+      camLabel: S.followCam ? '\u25C9 LOCKED' : '\u2725 FREE',
+      camStyle: { pointerEvents: 'auto', fontFamily: "'Archivo',sans-serif", fontWeight: 800, fontSize: 11.5, letterSpacing: '1px', border: '1px solid rgba(28,24,21,.13)', borderRadius: 999, padding: '8px 12px', cursor: 'pointer', background: S.followCam ? '#4C5B3C' : '#F3EFE6', color: S.followCam ? '#F3EFE6' : '#1C1815', boxShadow: '0 6px 16px rgba(28,24,21,.11)' },
+      toggleCam: () => { const on = !this.state.followCam; this.setState({ followCam: on }, () => { if (on) this.reframe(true); }); },
+      startLabelGps: S.gpsStart ? 'Current Location · live GPS' : null,
+      routeName: r ? r.name : '', routeBadge: r ? r.badge : '',
+      badgeStyle: { fontFamily: "'Archivo',sans-serif", fontWeight: 800, fontSize: 11, letterSpacing: '1px', background: r ? (this.TAGDOT[r.tag] || (this.STYLES.find(x => x.id === r.styleId) || st).dot) : '#4C5B3C', color: '#F3EFE6', border: '1px solid rgba(28,24,21,.13)', borderRadius: 999, padding: '4px 9px', whiteSpace: 'nowrap' },
+      routeExtras: r ? [
+        (r.turns != null ? r.turns + ' turns' : null),
+        (r.maxRunMi != null ? this.fmtD(r.maxRunMi) + ' straightaway' : null),
+        (r.climbFt != null ? r.climbFt + ' ft climb' : null),
+        (r.outMi != null ? this.fmtD(r.outMi) + ' out' : null),
+        (S.weather ? S.weather.temp + '\u00B0 · ' + S.weather.wind + ' mph ' + (S.weather.dir || '') : null),
+      ].filter(Boolean).join('  ·  ') : '',
+      routeDist: r ? this.fmtD(r.distMi) : '', routeTime: r ? Math.round(r.distMi / S.prefs.speed * 60) + ' min' : '',
+      stopCount: S.stops.length ? S.stops.length + (S.stops.length === 1 ? ' stop' : ' stops') : 'no stops',
+      barLane: segStyle(surf[0], '#B5502F'), barPath: segStyle(surf[1], '#4C5B3C'), barStreet: segStyle(surf[2], 'rgba(28,24,21,.16)'),
+      pctLane: surf[0] + '%', pctPath: surf[1] + '%', pctStreet: surf[2] + '%',
+      searchQ: S.searchQ, onSearch: (e) => this.setState({ searchQ: e.target.value }),
+      results,
+      hasStops: S.stops.length > 0,
+      stopsList: S.stops.map((s, i) => ({ n: i + 1, name: s.name, remove: () => this.removeStop(s.name) })),
+      hasSaved: S.saved.length > 0, noSaved: S.saved.length === 0,
+      savedList: S.saved.map(sv => ({
+        name: sv.name,
+        meta: sv.badge + ' · ' + this.fmtD(sv.distMi) + ' · saved ' + sv.date,
+        load: () => this.setState({ route: { ...sv }, screen: 'result', savedFlag: true, stops: [], riding: false }, () => { this.drawRoute(); this.drawStops(); setTimeout(() => { this.map && this.map.invalidateSize(); this.reframe(); }, 520); }),
+        similar: () => { this.setState({ style: sv.styleId }); this.generate({ style: sv.styleId }); },
+        del: () => this.persistSaved(S.saved.filter(x => x.id !== sv.id)),
+      })),
+      defStart: S.prefs.defStart, onDefStart: (e) => this.persistPrefs({ defStart: e.target.value }),
+      setPaved: () => this.persistPrefs({ surface: 'paved' }), setHard: () => this.persistPrefs({ surface: 'hard' }),
+      pavedStyle: segBtn(S.prefs.surface === 'paved'), hardStyle: segBtn(S.prefs.surface === 'hard'),
+      setMi: () => this.persistPrefs({ units: 'mi' }), setKm: () => this.persistPrefs({ units: 'km' }),
+      miStyle: segBtn(S.prefs.units === 'mi'), kmStyle: segBtn(S.prefs.units === 'km'),
+      speedVal: S.prefs.speed, onSpeed: (e) => this.persistPrefs({ speed: +e.target.value }),
+      speedLabel: S.prefs.units === 'km' ? Math.round(S.prefs.speed * 1.609) + ' km/h' : S.prefs.speed + ' mph',
+      clearSaved: () => { this.persistSaved([]); this.toast('Stash cleared'); },
+      showDirections: S.directions && !!r,
+      openDirections: () => this.setState({ directions: true }),
+      closeDirections: () => this.setState({ directions: false }),
+      openGoogle: this.openGoogle, openApple: this.openApple,
+      relayOn: !!(S.relay && S.relay.length && S.screen === 'result'),
+      relayCount: S.relay ? 'LEG ' + (S.relayIdx + 1) + ' OF ' + S.relay.length : '',
+      relayLeg: S.relay && S.relay[S.relayIdx] ? S.relay[S.relayIdx].from.name + '  \u2192  ' + S.relay[S.relayIdx].to.name : '',
+      relaySendLabel: 'RESEND',
+      relayNextLabel: S.relay && S.relayIdx >= S.relay.length - 1 ? 'DONE' : 'NEXT LEG \u2192',
+      relaySend: () => this.sendLeg(S.relayIdx),
+      relayPrev: () => { const i = Math.max(0, S.relayIdx - 1); this.setState({ relayIdx: i }, () => this.sendLeg(i)); },
+      relayNext: () => {
+        if (S.relayIdx >= S.relay.length - 1) { this.setState({ relay: null, relayIdx: 0 }); this.toast('Done'); return; }
+        const i = S.relayIdx + 1;
+        this.setState({ relayIdx: i }, () => this.sendLeg(i));
+      },
+      relayClose: () => this.setState({ relay: null, relayIdx: 0 }),
+      dirSummary: r ? r.name + ' · ' + this.fmtD(r.distMi) + ' · ' + (r.turns != null ? r.turns + ' turns' : 'loop') : '',
+      hasDirs: !!(r && r.steps && r.steps.length),
+      noDirs: !(r && r.steps && r.steps.length),
+      dirList: (r && r.steps ? r.steps.filter(x => x.turn || x.distMi > 0.05) : []).map((x, i) => ({
+        n: i + 1, text: x.text,
+        dist: x.distMi >= 0.1 ? this.fmtD(x.distMi) : Math.max(50, Math.round(x.distMi * 5280 / 10) * 10) + ' ft',
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>
